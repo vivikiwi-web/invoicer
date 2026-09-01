@@ -1,6 +1,6 @@
-# AI Invoice Manager — Backend
+# Invoicer — Backend
 
-PERN (PostgreSQL, Express, React, Node) backendas **AI Invoice & Billing**
+PERN (PostgreSQL, Express, React, Node) backendas **Invoicer**
 sistemai: klientai, sąskaitos, pajamų statistika ir Gemini AI funkcijos
 (pvz. kvitų skenavimas, verslo santraukos, priminimai).
 

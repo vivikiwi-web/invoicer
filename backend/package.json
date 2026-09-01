@@ -1,7 +1,7 @@
 {
-	"name": "ai-invoice-manager-backend",
+	"name": "invoicer-backend",
 	"version": "0.1.0",
-	"description": "Backend for the AI Invoice & Billing  - clients, invoices, revenue stats and Gemini AI features (PERN)",
+	"description": "Invoicer API — clients, invoices, payments, and Gemini AI features",
 	"main": "src/server.ts",
 	"type": "commonjs",
 	"engines": {

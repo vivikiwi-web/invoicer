@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { motion } from "motion/react";
+import { useId, type ButtonHTMLAttributes, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import { DiagonalMarquee } from "./BrandCardMarquee";
@@ -111,7 +111,7 @@ function BrandPanel({ headline, subhead }: { headline: ReactNode; subhead: strin
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/8 border border-white/10 backdrop-blur-md">
             <Sparkles size={12} className="text-white/80" />
             <span className="text-[11px] tracking-wide text-white/80 uppercase font-semibold">
-              AI Invoice Manager
+              Invoicer
             </span>
           </div>
 
@@ -158,14 +158,16 @@ export function AuthField({
   minLength?: number;
   icon?: LucideIcon;
 }) {
+  const id = useId();
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <label className="text-sm font-medium text-[var(--ink)]">{label}</label>
+        <label htmlFor={id} className="text-sm font-medium text-[var(--ink)]">{label}</label>
         {extra}
       </div>
       <div className="relative">
         <input
+          id={id}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}

@@ -1,6 +1,6 @@
 # Invoicer
 
-AI Invoice & Billing sistema: React frontendas ir Express backendas su PostgreSQL ir Gemini AI.
+Sąskaitų ir atsiskaitymų sistema: React frontendas ir Express backendas su PostgreSQL ir Gemini AI.
 
 ## Struktūra
 
