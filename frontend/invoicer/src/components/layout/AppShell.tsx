@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { CommandPalette } from "./CommandPalette";
@@ -17,7 +17,7 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
-    function onKey(e) {
+    function onKey(e: globalThis.KeyboardEvent) {
       const isK = e.key === "k" || e.key === "K";
       if (isK && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();

@@ -25,7 +25,6 @@ import {
   Building2,
   Receipt,
   TrendingUp,
-  Clock,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -87,9 +86,13 @@ export default function ClientDetail() {
   const del = useDeleteClient();
   const [editOpen, setEditOpen] = useState(false);
 
+  const insights = useMemo(
+    () =>
+      computeInsights(data?.invoices || [], data?.stats || { count: 0, totalBilled: 0, outstanding: 0 }),
+    [data],
+  );
   const invoices = data?.invoices || [];
   const stats = data?.stats || { count: 0, totalBilled: 0, outstanding: 0 };
-  const insights = useMemo(() => computeInsights(invoices, stats), [invoices, stats]);
 
   if (isLoading) {
     return (
@@ -106,7 +109,7 @@ export default function ClientDetail() {
 
   async function onDelete() {
     if (!window.confirm(`Delete ${client.name}? Their invoices will be kept but unlinked.`)) return;
-    await del.mutateAsync(id as string);
+    await del.mutateAsync(client.id);
     nav("/clients");
   }
 
@@ -223,7 +226,7 @@ export default function ClientDetail() {
       {/* Insights row — aligns with the columns above (1 / 2 split) */}
       {invoices.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 items-start">
-          <PaymentStatusCard insights={insights} stats={stats} />
+          <PaymentStatusCard insights={insights} />
           <div className="lg:col-span-2">
             <BillingChartCard insights={insights} />
           </div>
@@ -235,7 +238,7 @@ export default function ClientDetail() {
   );
 }
 
-function PaymentStatusCard({ insights, stats }) {
+function PaymentStatusCard({ insights }) {
   const { breakdown, avgInvoice, largest, paidRate } = insights;
   const hasData = breakdown.length > 0;
   return (

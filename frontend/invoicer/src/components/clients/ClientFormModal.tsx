@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -44,9 +44,12 @@ export function ClientFormModal({
     }
   }, [open, client]);
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof EMPTY) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  async function onSubmit(e) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
       setErr("Name is required");
@@ -65,6 +68,15 @@ export function ClientFormModal({
     }
   }
 
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -76,6 +88,9 @@ export function ClientFormModal({
         >
           <div className="absolute inset-0 bg-[var(--ink)]/30 backdrop-blur-sm" onClick={onClose} />
           <motion.form
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="client-form-title"
             onSubmit={onSubmit}
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -84,7 +99,7 @@ export function ClientFormModal({
             className="relative w-full max-w-[520px] rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-hover p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold tracking-tight">
+              <h3 id="client-form-title" className="font-display text-lg font-semibold tracking-tight">
                 {isEdit ? "Edit client" : "Add client"}
               </h3>
               <button

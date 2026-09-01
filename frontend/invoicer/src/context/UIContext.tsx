@@ -3,11 +3,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,8 +72,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const toast = useCallback(
-    (({ title, description, variant = "info", duration = 4200 }: ToastOptions = {}) => {
+  const showToast = useCallback(
+    ({ title, description, variant = "info", duration = 4200 }: ToastOptions = {}) => {
       const id = nextId();
       setToasts((prev) => [...prev, { id, title, description, variant }]);
       if (duration > 0) {
@@ -80,21 +81,27 @@ export function UIProvider({ children }: { children: ReactNode }) {
         timers.current.set(id, timer);
       }
       return id;
-    }) as ToastFn,
+    },
     [dismiss],
   );
 
-  toast.success = (title, description, opts) =>
-    toast({ title, description, variant: "success", ...opts });
-  toast.error = (title, description, opts) =>
-    toast({ title, description, variant: "error", ...opts });
-  toast.info = (title, description, opts) =>
-    toast({ title, description, variant: "info", ...opts });
+  const toast = useMemo((): ToastFn => {
+    const fn = (opts?: ToastOptions) => showToast(opts);
+    return Object.assign(fn, {
+      success: (title: string, description?: string, opts?: ToastOptions) =>
+        showToast({ title, description, variant: "success", ...opts }),
+      error: (title: string, description?: string, opts?: ToastOptions) =>
+        showToast({ title, description, variant: "error", ...opts }),
+      info: (title: string, description?: string, opts?: ToastOptions) =>
+        showToast({ title, description, variant: "info", ...opts }),
+    });
+  }, [showToast]);
 
   useEffect(() => {
+    const pending = timers.current;
     return () => {
-      timers.current.forEach((t) => clearTimeout(t));
-      timers.current.clear();
+      pending.forEach((t) => clearTimeout(t));
+      pending.clear();
     };
   }, []);
 
@@ -126,7 +133,11 @@ function ToastViewport({
   dismiss: (id: number) => void;
 }) {
   return (
-    <div className="pointer-events-none fixed top-5 right-5 z-50 flex flex-col gap-2.5 w-[360px] max-w-[calc(100vw-32px)]">
+    <div
+      aria-live="polite"
+      aria-relevant="additions"
+      className="pointer-events-none fixed top-5 right-5 z-50 flex flex-col gap-2.5 w-[360px] max-w-[calc(100vw-32px)]"
+    >
       <AnimatePresence initial={false}>
         {toasts.map((t) => {
           const variant = VARIANTS[t.variant] || VARIANTS.info;

@@ -15,6 +15,15 @@ if (missing.length) {
 }
 
 const isProd = process.env.NODE_ENV === "production";
+const jwtSecret = process.env.JWT_SECRET || "";
+if (jwtSecret.length < 32) {
+	const message = "JWT_SECRET must be at least 32 characters";
+	if (isProd) {
+		console.error(message);
+		process.exit(1);
+	}
+	console.warn(`${message}. Using a short secret is not safe outside local development.`);
+}
 const cookieSameSite = (process.env.COOKIE_SAMESITE || "lax").toLowerCase();
 
 module.exports = {
@@ -22,7 +31,7 @@ module.exports = {
 	port: Number(process.env.PORT) || 8000,
 	databaseUrl: process.env.DATABASE_URL,
 	sslRejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false",
-	jwtSecret: process.env.JWT_SECRET,
+	jwtSecret,
 	jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
 	cookieName: process.env.COOKIE_NAME || "aimb_token",
 	cookieSameSite: cookieSameSite === "none" ? "none" : "lax",

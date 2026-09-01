@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 interface TabsContextValue {
@@ -30,6 +30,7 @@ export function Tabs({
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
+      role="tablist"
       className={cn(
         "inline-flex items-center gap-1 bg-[var(--surface-2)] border border-[var(--border)] p-1 rounded-full",
         className,
@@ -54,7 +55,10 @@ export function TabsTrigger({
   const active = ctx.value === value;
   return (
     <button
+      type="button"
       onClick={() => ctx.onValueChange(value)}
+      aria-selected={active}
+      role="tab"
       className={cn(
         "relative px-3.5 h-8 text-xs font-medium rounded-full transition-colors",
         active ? "text-[var(--bg)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]",

@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { isEffectiveStatus } from "@shared/types";
 import type { EffectiveStatus } from "@shared/types";
 
 const badgeVariants = cva(
@@ -44,7 +45,9 @@ export function StatusBadge({
   status?: string;
   className?: string;
 }) {
-  const s = INVOICE_STATUS[(status as EffectiveStatus) || "draft"] || INVOICE_STATUS.draft;
+  const key: EffectiveStatus =
+    status && isEffectiveStatus(status) ? status : "draft";
+  const s = INVOICE_STATUS[key];
   return (
     <Badge tone={s.tone} className={className}>
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />

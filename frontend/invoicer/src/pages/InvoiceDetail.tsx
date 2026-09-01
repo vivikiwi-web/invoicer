@@ -58,7 +58,7 @@ export default function InvoiceDetail() {
 
   async function onDelete() {
     if (!window.confirm(`Delete invoice ${current.invoice_number}?`)) return;
-    await del.mutateAsync(id as string);
+    await del.mutateAsync(current.id);
     nav("/invoices");
   }
 
@@ -116,19 +116,19 @@ export default function InvoiceDetail() {
         <span className="text-xs text-[var(--ink-muted)] mr-1">Mark as:</span>
         <StatusButton
           active={invoice.status === "draft"}
-          onClick={() => setStatus.mutate({ id: id as string, status: "draft" })}
+          onClick={() => setStatus.mutate({ id: invoice.id, status: "draft" })}
           icon={Undo2}
           label="Draft"
         />
         <StatusButton
           active={invoice.status === "sent"}
-          onClick={() => setStatus.mutate({ id: id as string, status: "sent" })}
+          onClick={() => setStatus.mutate({ id: invoice.id, status: "sent" })}
           icon={Send}
           label="Sent"
         />
         <StatusButton
           active={isPaid}
-          onClick={() => setStatus.mutate({ id: id as string, status: "paid" })}
+          onClick={() => setStatus.mutate({ id: invoice.id, status: "paid" })}
           icon={CheckCircle2}
           label="Paid"
           tone="success"
@@ -316,7 +316,7 @@ function ClientCard({ invoice }) {
   );
 }
 
-const TONES = [
+const TONES: { key: ReminderTone; label: string }[] = [
   { key: "friendly", label: "Friendly" },
   { key: "firm", label: "Firm" },
   { key: "final", label: "Final notice" },
@@ -366,7 +366,7 @@ function PaymentReminderCard({ invoiceId }: { invoiceId: string }) {
         {TONES.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTone(t.key as ReminderTone)}
+            onClick={() => setTone(t.key)}
             className={cn(
               "flex-1 h-7 rounded-full text-[11px] font-semibold transition-colors",
               tone === t.key ? "bg-[var(--surface)] text-[var(--ink)] shadow-card" : "text-[var(--ink-muted)]"

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sun, Moon, Check, Upload, Building2, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -11,7 +11,6 @@ import { useToast } from "@/context/UIContext";
 import { authApi } from "@/api/auth";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { CURRENCIES, cn, errorMessage } from "@/lib/utils";
-import type { CompanySettings } from "@shared/types";
 
 function FieldLabel({ children }) {
   return (

@@ -84,8 +84,19 @@ async function replaceItems(client, invoiceId, items) {
 	}
 }
 
+const listQuerySchema = z.object({
+	status: z
+		.enum(["all", "draft", "sent", "paid", "overdue"])
+		.optional(),
+	client_id: uuid.optional(),
+	search: z.string().trim().max(120).optional(),
+	sort: z.enum(["issue_date", "total", "due_date", "created_at"]).optional(),
+	order: z.enum(["asc", "desc"]).optional(),
+});
+
 router.get(
 	"/",
+	validate(listQuerySchema, "query"),
 	asyncHandler(async (req, res) => {
 		const { status, client_id, search, sort = "issue_date", order = "desc" } =
 			req.query;

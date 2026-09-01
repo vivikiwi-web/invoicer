@@ -12,7 +12,7 @@ export function useClients() {
 export function useClient(id: string | undefined) {
   return useQuery({
     queryKey: clientKey(id || ""),
-    queryFn: () => clientsApi.get(id as string),
+    queryFn: () => clientsApi.get(id ?? ""),
     enabled: !!id,
   });
 }

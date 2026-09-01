@@ -17,7 +17,7 @@ export function useInvoices(params?: Record<string, string | undefined>) {
 export function useInvoice(id: string | undefined) {
   return useQuery({
     queryKey: invoiceKey(id || ""),
-    queryFn: () => invoicesApi.get(id as string),
+    queryFn: () => invoicesApi.get(id ?? ""),
     enabled: !!id,
   });
 }

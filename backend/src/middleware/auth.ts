@@ -17,8 +17,9 @@ async function requireAuth(req, res, next) {
 
 		req.user = user;
 		next();
-	} catch (err: any) {
-		if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+	} catch (err: unknown) {
+		const name = err && typeof err === "object" && "name" in err ? String(err.name) : "";
+		if (name === "JsonWebTokenError" || name === "TokenExpiredError") {
 			return next(ApiError.unauthorized("Invalid or expired session"));
 		}
 		next(err);

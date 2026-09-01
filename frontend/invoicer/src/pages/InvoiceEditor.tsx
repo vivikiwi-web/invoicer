@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Plus,
@@ -24,9 +24,14 @@ import {
 } from "@/hooks/useInvoices";
 import { aiApi } from "@/api/ai";
 import { CURRENCIES, formatMoney, toDateInput, cn, errorMessage } from "@/lib/utils";
-import type { CatalogItem, InvoiceStatus, ReceiptParseResult } from "@shared/types";
+import { computeTotals } from "@shared/invoice";
+import {
+  isInvoiceStatus,
+  type CatalogItem,
+  type InvoiceStatus,
+  type ReceiptParseResult,
+} from "@shared/types";
 
-const round = (n: number) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const blankItem = () => ({ description: "", quantity: 1, rate: 0 });
 
 type EditorItem = { description: string; quantity: number; rate: number };
@@ -46,7 +51,7 @@ interface EditorForm {
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
-function plusDays(days) {
+function plusDays(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
@@ -106,17 +111,11 @@ export default function InvoiceEditor() {
         items: [blankItem()],
       });
     }
-  }, [isEdit, existing, settings, form]);
+  }, [isEdit, existing, settings, form, preselectClient]);
 
   const totals = useMemo(() => {
-    if (!form) return { subtotal: 0, taxAmount: 0, total: 0 };
-    const subtotal = round(
-      form.items.reduce((s, it) => s + (Number(it.quantity) || 0) * (Number(it.rate) || 0), 0)
-    );
-    const disc = Math.min(round(Number(form.discount) || 0), subtotal);
-    const base = round(subtotal - disc);
-    const taxAmount = round((base * (Number(form.tax_rate) || 0)) / 100);
-    return { subtotal, discount: disc, taxAmount, total: round(base + taxAmount) };
+    if (!form) return { subtotal: 0, discount: 0, taxAmount: 0, total: 0 };
+    return computeTotals(form.items, Number(form.tax_rate) || 0, Number(form.discount) || 0);
   }, [form]);
 
   if (!form || (isEdit && loadingInvoice)) {
@@ -178,9 +177,10 @@ export default function InvoiceEditor() {
     };
     setSaving(true);
     try {
-      const inv = isEdit
-        ? await update.mutateAsync({ id: id as string, payload })
-        : await create.mutateAsync(payload);
+      const inv =
+        isEdit && id
+          ? await update.mutateAsync({ id, payload })
+          : await create.mutateAsync(payload);
       nav(`/invoices/${inv.id}`);
     } catch (e) {
       setErr(errorMessage(e, "Couldn't save invoice"));
@@ -254,7 +254,9 @@ export default function InvoiceEditor() {
                 <select
                   className={selectClass}
                   value={form.status}
-                  onChange={(e) => set({ status: e.target.value as InvoiceStatus })}
+                  onChange={(e) => {
+                    if (isInvoiceStatus(e.target.value)) set({ status: e.target.value });
+                  }}
                 >
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>

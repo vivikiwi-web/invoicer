@@ -1,7 +1,26 @@
-export type InvoiceStatus = "draft" | "sent" | "paid";
-export type EffectiveStatus = InvoiceStatus | "overdue";
-export type ReminderTone = "friendly" | "firm" | "final";
-export type NoteKind = "description" | "terms";
+export const INVOICE_STATUSES = ["draft", "sent", "paid"] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export const EFFECTIVE_STATUSES = ["draft", "sent", "paid", "overdue"] as const;
+export type EffectiveStatus = (typeof EFFECTIVE_STATUSES)[number];
+
+export const REMINDER_TONES = ["friendly", "firm", "final"] as const;
+export type ReminderTone = (typeof REMINDER_TONES)[number];
+
+export const NOTE_KINDS = ["description", "terms"] as const;
+export type NoteKind = (typeof NOTE_KINDS)[number];
+
+export function isInvoiceStatus(value: string): value is InvoiceStatus {
+  return (INVOICE_STATUSES as readonly string[]).includes(value);
+}
+
+export function isEffectiveStatus(value: string): value is EffectiveStatus {
+  return (EFFECTIVE_STATUSES as readonly string[]).includes(value);
+}
+
+export function isReminderTone(value: string): value is ReminderTone {
+  return (REMINDER_TONES as readonly string[]).includes(value);
+}
 
 export interface User {
   id: string;

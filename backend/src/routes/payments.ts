@@ -29,28 +29,29 @@ type PaymentInput = import("zod").infer<typeof paymentSchema>;
 
 const num = (v) => Number(v) || 0;
 
-async function reconcileInvoice(client, invoiceId) {
+async function reconcileInvoice(client, invoiceId: string, userId: string) {
 	const { rows } = await client.query(
 		`SELECT i.total,
 			COALESCE((SELECT SUM(amount) FROM payments WHERE invoice_id = i.id), 0) AS paid
-		FROM invoices i WHERE i.id = $1`,
-		[invoiceId],
+		FROM invoices i WHERE i.id = $1 AND i.user_id = $2`,
+		[invoiceId, userId],
 	);
 
 	if (!rows[0]) return;
 	const { total, paid } = rows[0];
 	if (num(paid) >= num(total) && num(total) > 0) {
 		await client.query(
-			`UPDATE invoices SET status='paid', paid_at=COALESCE(paid_at, now()), updated_at=now() WHERE id=$1`,
-			[invoiceId],
+			`UPDATE invoices SET status='paid', paid_at=COALESCE(paid_at, now()), updated_at=now()
+			WHERE id=$1 AND user_id=$2`,
+			[invoiceId, userId],
 		);
 	} else {
 		await client.query(
 			`UPDATE invoices SET status = CASE WHEN status='paid' THEN 'sent' ELSE status END,
 				paid_at = CASE WHEN status='paid' THEN NULL ELSE paid_at END,
 				updated_at = now()
-			WHERE id = $1`,
-			[invoiceId],
+			WHERE id = $1 AND user_id = $2`,
+			[invoiceId, userId],
 		);
 	}
 }
@@ -111,7 +112,7 @@ router.post(
 					b.notes || "",
 				],
 			);
-			await reconcileInvoice(client, b.invoiceId);
+			await reconcileInvoice(client, b.invoiceId, req.user.id);
 			return rows[0];
 		});
 
@@ -131,8 +132,11 @@ router.delete(
 		if (!existing) throw ApiError.notFound("Payment not found");
 
 		await withTransaction(async (client) => {
-			await client.query(`DELETE FROM payments WHERE id = $1`, [req.params.id]);
-			await reconcileInvoice(client, existing.invoice_id);
+			await client.query(`DELETE FROM payments WHERE id = $1 AND user_id = $2`, [
+				req.params.id,
+				req.user.id,
+			]);
+			await reconcileInvoice(client, existing.invoice_id, req.user.id);
 		});
 
 		res.json({ ok: true });

@@ -4,7 +4,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { NotificationsPopover } from "./NotificationsPopover";
 
-export function Topbar({ onOpenPalette }) {
+export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const { theme, toggle } = useTheme();
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] || "there";

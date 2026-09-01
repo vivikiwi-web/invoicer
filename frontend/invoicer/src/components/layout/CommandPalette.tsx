@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
+import type { LucideIcon } from "lucide-react";
 import {
   Search,
   LayoutGrid,
@@ -14,7 +15,16 @@ import { cn, formatMoney } from "@/lib/utils";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useClients } from "@/hooks/useClients";
 
-const NAV_ITEMS = [
+interface PaletteItem {
+  id: string;
+  kind: string;
+  label: string;
+  hint?: string;
+  to: string;
+  icon: LucideIcon;
+}
+
+const NAV_ITEMS: PaletteItem[] = [
   { id: "nav:dashboard", kind: "nav", label: "Dashboard", hint: "Overview", to: "/dashboard", icon: LayoutGrid },
   { id: "nav:invoices", kind: "nav", label: "Invoices", hint: "Browse & manage", to: "/invoices", icon: FileText },
   { id: "nav:new", kind: "nav", label: "Create Invoice", hint: "New invoice", to: "/invoices/new", icon: Plus },
@@ -22,7 +32,7 @@ const NAV_ITEMS = [
   { id: "nav:settings", kind: "nav", label: "Settings", hint: "Company profile, appearance", to: "/settings", icon: SettingsIcon },
 ];
 
-function scoreMatch(query, text) {
+function scoreMatch(query: string, text: string) {
   if (!query) return 1;
   const q = query.toLowerCase();
   const t = (text || "").toLowerCase();
@@ -36,7 +46,13 @@ function scoreMatch(query, text) {
   return qi === q.length ? 1 : 0;
 }
 
-export function CommandPalette({ open, onClose }) {
+export function CommandPalette({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
@@ -90,7 +106,7 @@ export function CommandPalette({ open, onClose }) {
     el?.scrollIntoView({ block: "nearest" });
   }, [activeIdx]);
 
-  function handleKeyDown(e) {
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActiveIdx((i) => Math.min(items.length - 1, i + 1));
@@ -117,7 +133,7 @@ export function CommandPalette({ open, onClose }) {
   ];
 
   let renderIdx = -1;
-  function renderItem(it) {
+  function renderItem(it: PaletteItem) {
     renderIdx += 1;
     const idx = renderIdx;
     const Icon = it.icon;
@@ -178,6 +194,7 @@ export function CommandPalette({ open, onClose }) {
             onClick={onClose}
           />
           <motion.div
+            aria-modal="true"
             role="dialog"
             aria-label="Command palette"
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
@@ -193,6 +210,7 @@ export function CommandPalette({ open, onClose }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
+                aria-label="Search invoices, clients, and pages"
                 placeholder="Search invoices, clients, or jump to a page..."
                 className="flex-1 bg-transparent outline-none text-sm text-[var(--ink)] placeholder:text-[var(--ink-muted)]"
               />

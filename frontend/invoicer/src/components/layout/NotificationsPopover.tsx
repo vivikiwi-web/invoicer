@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Bell, FileText, CheckCircle2, AlertTriangle, Send } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -19,6 +19,11 @@ const ICON = {
   draft: FileText,
 };
 
+function statusKey(status?: string): keyof typeof TONE {
+  if (status && status in TONE) return status as keyof typeof TONE;
+  return "draft";
+}
+
 export function NotificationsPopover() {
   const navigate = useNavigate();
   const { data } = useDashboard();
@@ -30,10 +35,10 @@ export function NotificationsPopover() {
 
   useEffect(() => {
     if (!open) return;
-    function onClick(e) {
-      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    function onClick(e: MouseEvent) {
+      if (e.target instanceof Node && !rootRef.current?.contains(e.target)) setOpen(false);
     }
-    function onKey(e) {
+    function onKey(e: globalThis.KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
     window.addEventListener("mousedown", onClick);
@@ -89,8 +94,8 @@ export function NotificationsPopover() {
               ) : (
                 <ul>
                   {invoices.map((inv, idx) => {
-                    const st = inv.effective_status || "draft";
-                    const Icon = ICON[st as keyof typeof ICON] || FileText;
+                    const st = statusKey(inv.effective_status);
+                    const Icon = ICON[st] || FileText;
                     return (
                       <li key={inv.id}>
                         <button
@@ -103,7 +108,7 @@ export function NotificationsPopover() {
                             idx > 0 && "border-t border-[var(--border)]"
                           )}
                         >
-                          <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", TONE[st as keyof typeof TONE] || TONE.draft)}>
+                          <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", TONE[st])}>
                             <Icon size={14} />
                           </div>
                           <div className="flex-1 min-w-0">

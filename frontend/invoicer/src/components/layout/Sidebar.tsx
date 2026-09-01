@@ -36,7 +36,15 @@ const LABEL_BASE =
   "transition-[opacity,transform] duration-200 ease-out " +
   "group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 group-hover/sidebar:delay-100";
 
-function NavItem({ to, icon: Icon, label }) {
+function NavItem({
+  to,
+  icon: Icon,
+  label,
+}: {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+}) {
   return (
     <NavLink to={to} title={label} className="block">
       {({ isActive }) => (
@@ -69,7 +77,7 @@ function ActionRow({
   onClick?: () => void;
   to?: string;
 }) {
-  const inner = (isActive) => (
+  const inner = (isActive: boolean) => (
     <div
       className={cn(
         ROW_BASE,
@@ -94,7 +102,7 @@ function ActionRow({
   }
 
   return (
-    <button onClick={onClick} title={label} className="block">
+    <button type="button" onClick={onClick} title={label} className="block">
       {inner(false)}
     </button>
   );
@@ -107,6 +115,7 @@ export function Sidebar() {
 
   return (
     <aside
+      aria-label="Main navigation"
       className={cn(
         "group/sidebar hidden md:flex shrink-0 h-[calc(100vh-32px)] sticky top-4 ml-4",
         "flex-col items-center justify-between py-5 rounded-3xl",

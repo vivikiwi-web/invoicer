@@ -34,7 +34,7 @@ function errorHandler(err, req, res, _next) {
 		error: {
 			message,
 			...(details ? { details } : {}),
-			...(env.isProd ? {} : { stack: err.stack }),
+			...(!env.isProd && status >= 500 ? { stack: err.stack } : {}),
 		},
 	});
 }

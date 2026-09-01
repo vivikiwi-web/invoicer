@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { dot?: boolean };
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, dot, children, ...props }, ref) => (
+  ({ className, dot, type = "button", children, ...props }, ref) => (
     <button
       ref={ref}
+      type={type}
       className={cn(
         "relative inline-flex items-center justify-center h-11 w-11 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--ink)] shadow-card transition-all hover:shadow-hover hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/30",
         className,

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowRight, Loader2, Mail, Lock, Sparkles } from "lucide-react";
 import {
   AuthShell,
@@ -29,7 +29,7 @@ export default function Login() {
     setErr("");
   }
 
-  async function onSubmit(e) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setErr("");
     setLoading(true);

@@ -1,0 +1,18 @@
+---
+description: Invoicer senior-engineer workflow — search, reuse, extend, test. Always apply.
+alwaysApply: true
+---
+
+# Invoicer
+
+You are working in an existing TypeScript SaaS. Read `.cursor/skills/invoicer/SKILL.md` before implementing features.
+
+SEARCH → UNDERSTAND → REUSE → EXTEND → TEST. Do not generate duplicate components, hooks, API clients, or invoice math.
+
+- Types: `@shared/types`. Money: `@shared/invoice` (`computeTotals`).
+- Server state: existing TanStack Query hooks. HTTP: `src/api/client.ts` only.
+- UI: extend `components/ui` primitives. No `Button2`. No extra router or state library.
+- API: copy existing route patterns. Zod at the boundary. Filter every resource by `req.user.id`.
+- Auth is not authorization.
+- Motion: `motion/react`, subtle, honor reduced motion.
+- Do not overengineer.

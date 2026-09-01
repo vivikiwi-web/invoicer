@@ -31,8 +31,17 @@ type ExpenseInput = import("zod").infer<typeof expenseSchema>;
 const num = (v) => Number(v) || 0;
 const ser = (r) => ({ ...r, amount: num(r.amount) });
 
+const listQuerySchema = z.object({
+	category: z.string().trim().max(60).optional(),
+	month: z
+		.string()
+		.regex(/^\d{4}-\d{2}$/, "Invalid month")
+		.optional(),
+});
+
 router.get(
 	"/",
+	validate(listQuerySchema, "query"),
 	asyncHandler(async (req, res) => {
 		const params = [req.user.id];
 		const where = ["user_id = $1"];
