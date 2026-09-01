@@ -1,0 +1,82 @@
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
+
+const env = require("./config/env");
+const { connectDB } = require("./config/db");
+const { notFound, errorHandler } = require("./middleware/errorHandler");
+
+const healthRouter = require("./routes/health");
+const authRouter = require("./routes/auth");
+const clientsRouter = require("./routes/clients");
+const invoicesRouter = require("./routes/invoice");
+const dashboardRouter = require("./routes/dashboard");
+const reportsRouter = require("./routes/reports");
+const settingsRouter = require("./routes/settings");
+const itemsRouter = require("./routes/items");
+const expensesRouter = require("./routes/expenses");
+const paymentsRouter = require("./routes/payments");
+const aiRouter = require("./routes/ai");
+
+const app = express();
+app.set("trust proxy", 1);
+
+app.use(
+	helmet({
+		crossOriginResourcePolicy: { policy: "cross-origin" },
+	}),
+);
+
+app.use(
+	cors({
+		origin: env.clientOrigin,
+		credentials: true,
+	}),
+);
+
+app.use(express.json({ limit: "200kb" }));
+app.use(express.urlencoded({ extended: true, limit: "200kb" }));
+app.use(cookieParser());
+
+if (!env.isProd) {
+	app.use(morgan("dev"));
+}
+
+app.use("/api/health", healthRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/clients", clientsRouter);
+app.use("/api/invoices", invoicesRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/settings", settingsRouter);
+app.use("/api/items", itemsRouter);
+app.use("/api/expenses", expensesRouter);
+app.use("/api/payments", paymentsRouter);
+app.use("/api/ai", aiRouter);
+
+app.use(notFound);
+app.use(errorHandler);
+
+async function start() {
+	try {
+		await connectDB();
+		app.listen(env.port, () => {
+			console.log(
+				`Server listening on http://localhost:${env.port} (${env.nodeEnv})`,
+			);
+		});
+	} catch (err) {
+		console.error("Failed to start server:", (err as Error).message);
+		process.exit(1);
+	}
+}
+
+process.on("unhandledRejection", (reason) => {
+	console.error("Unhandled rejection:", reason);
+});
+
+start();
+
+module.exports = app;
