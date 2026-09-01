@@ -1,0 +1,42 @@
+{
+  "main": "Pagrindinė navigacija",
+  "menu": "Meniu",
+  "dashboard": "Suvestinė",
+  "invoices": "Sąskaitos",
+  "clients": "Klientai",
+  "expenses": "Išlaidos",
+  "payments": "Mokėjimai",
+  "items": "Katalogas",
+  "reports": "Ataskaitos",
+  "settings": "Nustatymai",
+  "logOut": "Atsijungti",
+  "hello": "Sveiki, {{name}}.",
+  "helloGuest": "Sveiki.",
+  "subtitle": "Šiandienos sąskaitų ir mokėjimų apžvalga.",
+  "searchPlaceholder": "Ieškoti sąskaitų, klientų arba pereiti…",
+  "searchTitle": "Paieška",
+  "toggleTheme": "Keisti temą",
+  "palette": {
+    "placeholder": "Ieškoti arba pereiti…",
+    "empty": "Nieko nerasta",
+    "nav": "Navigacija",
+    "overview": "Apžvalga",
+    "browse": "Peržiūra ir valdymas",
+    "newInvoice": "Nauja sąskaita",
+    "manageClients": "Klientai",
+    "companyAppearance": "Įmonė ir išvaizda"
+  },
+  "notifications": {
+    "title": "Pranešimai",
+    "empty": "Nėra naujų pranešimų",
+    "overdueOne": "{{count}} vėluojanti sąskaita",
+    "overdueOther": "{{count}} vėluojančios sąskaitos"
+  },
+  "recentActivity": "Naujausia veikla",
+  "viewAllInvoices": "Visos sąskaitos",
+  "nothingHere": "Kol kas tuščia",
+  "activityHint": "Čia atsiras naujos sąskaitos ir mokėjimai.",
+  "paletteNavigate": "naršyti",
+  "paletteSelect": "pasirinkti",
+  "paletteResults": "{{count}} rezultatai"
+}

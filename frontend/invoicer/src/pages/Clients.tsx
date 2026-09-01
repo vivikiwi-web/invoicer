@@ -9,11 +9,16 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ClientFormModal } from "@/components/clients/ClientFormModal";
 import { useClients } from "@/hooks/useClients";
+import { useSettings } from "@/hooks/useSettings";
 import { formatMoney } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export default function Clients() {
+  const { t } = useTranslation("clients");
   const nav = useNavigate();
   const { data, isLoading } = useClients();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -30,11 +35,11 @@ export default function Clients() {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        description="Everyone you bill, with their totals at a glance."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button variant="accent" onClick={() => setModalOpen(true)}>
-            <Plus size={16} /> Add Client
+            <Plus size={16} /> {t("add")}
           </Button>
         }
       />
@@ -43,7 +48,7 @@ export default function Clients() {
         <div className="mb-5 md:w-[320px]">
           <SearchInput
             leftIcon={<Search size={16} />}
-            placeholder="Search clients..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -59,12 +64,12 @@ export default function Clients() {
       ) : clients.length === 0 ? (
         <EmptyState
           icon={Users}
-          title={search ? "No matching clients" : "No clients yet"}
-          description={search ? "Try a different search." : "Add your first client to start invoicing them."}
+          title={search ? t("emptySearch") : t("empty")}
+          description={search ? t("emptySearchBody") : t("emptyBody")}
           action={
             !search && (
               <Button variant="accent" onClick={() => setModalOpen(true)}>
-                <Plus size={16} /> Add Client
+                <Plus size={16} /> {t("add")}
               </Button>
             )
           }
@@ -99,22 +104,22 @@ export default function Clients() {
               <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-[var(--border)]">
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-                    Total billed
+                    {t("totalBilled")}
                   </div>
                   <div className="text-sm font-semibold text-[var(--ink)] tabular mt-0.5">
-                    {formatMoney(c.total_billed)}
+                    {formatMoney(c.total_billed, currency)}
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-                    Outstanding
+                    {t("outstanding")}
                   </div>
                   <div
                     className={`text-sm font-semibold tabular mt-0.5 ${
                       Number(c.outstanding) > 0 ? "text-[var(--warning)]" : "text-[var(--ink)]"
                     }`}
                   >
-                    {formatMoney(c.outstanding)}
+                    {formatMoney(c.outstanding, currency)}
                   </div>
                 </div>
               </div>

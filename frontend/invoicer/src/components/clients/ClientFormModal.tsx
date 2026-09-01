@@ -1,24 +1,38 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useCreateClient, useUpdateClient } from "@/hooks/useClients";
 import { errorMessage } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
+import type { Client, DocumentLanguage } from "@shared/types";
 
-import type { Client } from "@shared/types";
-
-const EMPTY = { name: "", email: "", company: "", phone: "", address: "", notes: "" };
+const EMPTY = {
+  name: "",
+  email: "",
+  company: "",
+  phone: "",
+  address: "",
+  notes: "",
+  document_language: "" as "" | DocumentLanguage,
+};
 
 export function ClientFormModal({
   open,
   onClose,
   client,
+  onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   client?: Client | null;
+  onCreated?: (client: Client) => void;
 }) {
+  const { t } = useTranslation("clients");
+  const { t: tc } = useTranslation("common");
   const isEdit = !!client;
   const create = useCreateClient();
   const update = useUpdateClient();
@@ -37,8 +51,9 @@ export function ClientFormModal({
               phone: client.phone || "",
               address: client.address || "",
               notes: client.notes || "",
+              document_language: client.document_language || "",
             }
-          : EMPTY
+          : EMPTY,
       );
       setErr("");
     }
@@ -52,17 +67,27 @@ export function ClientFormModal({
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      setErr("Name is required");
+      setErr(t("nameRequired"));
       return;
     }
     setSaving(true);
     setErr("");
+    const payload = {
+      ...form,
+      document_language: form.document_language || null,
+    };
     try {
-      if (isEdit && client?.id) await update.mutateAsync({ id: client.id, payload: form });
-      else await create.mutateAsync(form);
-      onClose();
+      if (isEdit && client?.id) {
+        await update.mutateAsync({ id: client.id, payload });
+        onClose();
+      } else {
+        const created = await create.mutateAsync(payload);
+        analytics.track("client_created");
+        onCreated?.(created);
+        onClose();
+      }
     } catch (ex) {
-      setErr(errorMessage(ex, "Couldn't save client"));
+      setErr(errorMessage(ex, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -100,7 +125,7 @@ export function ClientFormModal({
           >
             <div className="flex items-center justify-between mb-5">
               <h3 id="client-form-title" className="font-display text-lg font-semibold tracking-tight">
-                {isEdit ? "Edit client" : "Add client"}
+                {isEdit ? t("edit") : t("add")}
               </h3>
               <button
                 type="button"
@@ -112,29 +137,49 @@ export function ClientFormModal({
             </div>
 
             <div className="space-y-3">
-              <Field label="Name *">
-                <Input value={form.name} onChange={set("name")} placeholder="Abcd Inc." />
+              <Field label={`${t("name")} *`}>
+                <Input value={form.name} onChange={set("name")} placeholder="UAB Pavyzdys" />
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Email">
+                <Field label={t("email")}>
                   <Input type="email" value={form.email} onChange={set("email")} placeholder="billing@acme.com" />
                 </Field>
-                <Field label="Company">
-                  <Input value={form.company} onChange={set("company")} placeholder="Acme Inc." />
+                <Field label={t("company")}>
+                  <Input value={form.company} onChange={set("company")} />
                 </Field>
               </div>
-              <Field label="Phone">
-                <Input value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" />
+              <Field label={t("phone")}>
+                <Input value={form.phone} onChange={set("phone")} />
               </Field>
-              <Field label="Address">
-                <Input value={form.address} onChange={set("address")} placeholder="123 Main St, City, State" />
+              <Field label={t("address")}>
+                <Input value={form.address} onChange={set("address")} />
               </Field>
-              <Field label="Notes">
+              <Field label={tc("documentLanguage.label")}>
+                <Select
+                  value={form.document_language || "inherit"}
+                  onValueChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      document_language: v === "inherit" ? "" : (v as DocumentLanguage),
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inherit">{tc("documentLanguage.inherit")}</SelectItem>
+                    <SelectItem value="lt">{tc("documentLanguage.lt")}</SelectItem>
+                    <SelectItem value="en">{tc("documentLanguage.en")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("notes")}>
                 <textarea
                   rows={2}
                   value={form.notes}
                   onChange={set("notes")}
-                  placeholder="Anything worth remembering..."
+                  placeholder={t("notesPlaceholder")}
                   className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--ink-muted)] outline-none resize-y focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/15"
                 />
               </Field>
@@ -144,11 +189,11 @@ export function ClientFormModal({
 
             <div className="flex items-center justify-end gap-2 mt-6">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button type="submit" variant="accent" disabled={saving}>
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                {isEdit ? "Save changes" : "Add client"}
+                {isEdit ? tc("save") : t("add")}
               </Button>
             </div>
           </motion.form>

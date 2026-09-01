@@ -1,0 +1,25 @@
+{
+  "title": "Dažnai užduodami klausimai",
+  "items": [
+    {
+      "q": "Ar tikrai galiu pradėti nemokamai?",
+      "a": "Taip. Free planas skirtas solo darbui su pagrindinėmis sąskaitomis. Mokėjimo kortelės nereikia."
+    },
+    {
+      "q": "Ar priminimai išsiunčiami klientams?",
+      "a": "Ne. Invoicer paruošia priminimo tekstą. Siuntimą el. paštu atliekate patys."
+    },
+    {
+      "q": "Kokia kalba išrašomos sąskaitos?",
+      "a": "Sąsają galite naudoti lietuviškai arba angliškai. Kiekvienos sąskaitos PDF kalbą pasirenkate atskirai."
+    },
+    {
+      "q": "Ar duomenys saugūs?",
+      "a": "Kiekviena paskyra mato tik savo įrašus. Slaptažodžiai saugomi maišos pavidalu. DI kvietimai vyksta serveryje."
+    },
+    {
+      "q": "Kada atsiras komandos planas?",
+      "a": "Business planas pažymėtas kaip netrukus. Palikite el. paštą arba susisiekite, kai norėsite žinios."
+    }
+  ]
+}

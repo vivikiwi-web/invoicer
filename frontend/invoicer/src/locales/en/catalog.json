@@ -1,0 +1,19 @@
+{
+  "title": "Items",
+  "description": "Reusable products and services.",
+  "add": "Add item",
+  "edit": "Edit item",
+  "name": "Name",
+  "descriptionLabel": "Description",
+  "rate": "Rate",
+  "unit": "Unit",
+  "empty": "Catalog is empty",
+  "deleteTitle": "Delete item?",
+  "deleteBody": "{{name}} will be removed from the catalog.",
+  "emptyDesc": "Save common services and rates to speed up invoicing.",
+  "nameRequired": "Name is required",
+  "saveFailed": "Couldn't save item",
+  "namePlaceholder": "Frontend development",
+  "descPlaceholder": "Short description",
+  "unitPlaceholder": "hour / project"
+}

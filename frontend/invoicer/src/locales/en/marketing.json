@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "features": "Features",
+    "ai": "AI",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "signIn": "Sign in",
+    "getStarted": "Get started",
+    "menu": "Menu"
+  },
+  "hero": {
+    "title": "Invoicing that runs itself",
+    "subtitle": "Create polished PDF invoices, see who still owes you, and get paid without spreadsheet chaos.",
+    "cta": "Start for free",
+    "note": "Free to start. No credit card required.",
+    "badge": "AI-powered invoicing"
+  },
+  "features": {
+    "title": "Everything you need to get paid",
+    "invoices": { "title": "Invoices and PDF", "body": "Create, send, and download professional invoices." },
+    "clients": { "title": "Clients and balances", "body": "See unpaid invoices and keep contacts in one place." },
+    "payments": { "title": "Payments", "body": "Record transfers and know what is already paid." },
+    "expenses": { "title": "Expenses", "body": "Track costs and scan receipts instead of typing them." },
+    "reports": { "title": "Reports", "body": "Revenue, expenses, and aging balances without extra work." },
+    "catalog": { "title": "Catalog", "body": "Save services and rates so the next invoice is faster." }
+  },
+  "ai": {
+    "title": "AI that saves time",
+    "subtitle": "Receipts, reminder drafts, and revenue summaries — you still decide what to send.",
+    "receipts": "Scan a receipt and get line items and totals.",
+    "reminders": "Draft a polite or firmer reminder — sending stays with you.",
+    "summary": "A short monthly snapshot of revenue and overdue invoices.",
+    "receiptsTitle": "Receipt scan",
+    "remindersTitle": "Reminders",
+    "summaryTitle": "Monthly summary"
+  },
+  "security": {
+    "title": "Your data stays yours",
+    "body": "Accounts are isolated. Passwords are hashed. AI calls go through our server only."
+  },
+  "marquee": ["PDF invoices", "Receipt scanning", "Payments", "Expenses", "Reports", "Getting paid"],
+  "cta": {
+    "title": "Start today",
+    "body": "Create your first invoice in a few minutes.",
+    "button": "Create an account"
+  },
+  "footer": {
+    "product": "Product",
+    "account": "Account",
+    "legal": "Legal",
+    "language": "Language",
+    "pricing": "Pricing",
+    "features": "Features",
+    "login": "Sign in",
+    "register": "Register"
+  },
+  "meta": {
+    "homeTitle": "Invoicer — invoicing that runs itself",
+    "homeDescription": "Create PDF invoices, track clients and payments, scan receipts. Free to start.",
+    "pricingTitle": "Pricing — Invoicer",
+    "pricingDescription": "Free and Pro plans. Business coming soon."
+  }
+}

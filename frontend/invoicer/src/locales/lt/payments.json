@@ -1,0 +1,31 @@
+{
+  "title": "Mokėjimai",
+  "description": "Sąskaitoms priskirti mokėjimai.",
+  "add": "Įrašyti mokėjimą",
+  "invoice": "Sąskaita",
+  "amount": "Suma",
+  "method": "Būdas",
+  "date": "Data",
+  "notes": "Pastabos",
+  "empty": "Mokėjimų dar nėra",
+  "received": "Gauta",
+  "thisMonth": "Šį mėnesį",
+  "deleteTitle": "Ištrinti mokėjimą?",
+  "deleteBody": "Mokėjimo įrašas bus pašalintas.",
+  "selectInvoice": "Pasirinkite sąskaitą",
+  "methods": {
+    "bank": "Banko pavedimas",
+    "card": "Kortelė",
+    "check": "Čekis",
+    "cash": "Grynieji",
+    "paypal": "PayPal",
+    "other": "Kita",
+    "stripe": "Stripe"
+  },
+  "client": "Klientas",
+  "invoiceClient": "Sąskaita / klientas",
+  "amountRequired": "Įveskite tinkamą sumą",
+  "recordTitle": "Įrašyti mokėjimą",
+  "notesPlaceholder": "Nuoroda / pastaba",
+  "saveFailed": "Nepavyko įrašyti mokėjimo"
+}

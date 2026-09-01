@@ -10,13 +10,17 @@ import {
 } from "@/components/auth/AuthShell";
 import AILogo from "@/components/layout/AILogo";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { errorMessage } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 
 const DEMO = import.meta.env.DEV
   ? { email: "alex@timetoprogram.com", password: "Test@1234" }
   : null;
 
 export default function Login() {
+  const { t } = useTranslation("auth");
   const { login } = useAuth();
   const nav = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -35,9 +39,10 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form);
+      analytics.track("login_completed");
       nav("/dashboard");
     } catch (e) {
-      setErr(errorMessage(e, "Login failed"));
+      setErr(errorMessage(e, t("loginFailed")));
     } finally {
       setLoading(false);
     }
@@ -45,34 +50,29 @@ export default function Login() {
 
   return (
     <AuthShell
-      headline={
-        <>
-          Invoicing,
-          <br />
-          <em style={{ fontStyle: "italic" }}>on autopilot.</em>
-        </>
-      }
-      subhead="Create polished invoices, track every payment, and let AI handle receipts, reminders, and revenue summaries."
+      headline={t("loginHeadline")}
+      subhead={t("loginSubhead")}
     >
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="mb-12">
+        <div className="mb-12 flex items-center justify-between">
           <AILogo size={48} />
+          <LanguageSwitcher size="sm" />
         </div>
 
         <h1 className="font-display text-[34px] font-semibold tracking-tight text-[var(--ink)] leading-[1.05]">
-          Welcome back
+          {t("loginTitle")}
         </h1>
         <p className="text-[var(--ink-muted)] mt-2 text-[15px]">
-          Sign in to manage your invoices and clients.
+          {t("loginSubtitle")}
         </p>
 
         <form onSubmit={onSubmit} className="mt-9 space-y-4">
           <AuthField
-            label="Email"
+            label={t("email")}
             type="email"
             autoComplete="email"
             value={form.email}
@@ -82,21 +82,14 @@ export default function Login() {
           />
 
           <AuthField
-            label="Password"
+            label={t("password")}
             type="password"
             autoComplete="current-password"
             value={form.password}
             onChange={(v) => setForm({ ...form, password: v })}
             placeholder="••••••••"
             icon={Lock}
-            extra={
-              <button
-                type="button"
-                className="text-xs text-[var(--accent-strong)] font-semibold hover:underline"
-              >
-                Forgot?
-              </button>
-            }
+            extra={null}
           />
 
           <AuthErrorBanner>{err}</AuthErrorBanner>
@@ -106,11 +99,11 @@ export default function Login() {
               {loading ? (
                 <>
                   <Loader2 size={15} className="animate-spin" />
-                  Signing in...
+                  {t("signingIn")}
                 </>
               ) : (
                 <>
-                  Sign in <ArrowRight size={15} />
+                  {t("signIn")} <ArrowRight size={15} />
                 </>
               )}
             </AuthPrimaryButton>
@@ -129,19 +122,19 @@ export default function Login() {
                 onClick={fillDemo}
                 className="w-full h-12 rounded-2xl border border-dashed border-[var(--accent)]/40 bg-[var(--accent-soft)]/40 text-sm font-semibold text-[var(--accent-strong)] hover:bg-[var(--accent-soft)] transition-colors inline-flex items-center justify-center gap-2"
               >
-                <Sparkles size={14} /> Use demo credentials
+                <Sparkles size={14} /> {t("useDemo")}
               </button>
             </>
           )}
         </form>
 
         <div className="text-sm text-[var(--ink-muted)] text-center mt-8">
-          Don't have an account?{" "}
+          {t("noAccount")}{" "}
           <Link
             to="/register"
             className="text-[var(--accent-strong)] font-semibold hover:underline"
           >
-            Create one
+            {t("createAccount")}
           </Link>
         </div>
       </motion.div>

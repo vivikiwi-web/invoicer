@@ -1,0 +1,42 @@
+{
+  "title": "Kainos",
+  "subtitle": "Pradėkite nemokamai. Pro — kai prireiks daugiau erdvės.",
+  "vatNote": "PVM taikomas pagal įstatymus.",
+  "perMonth": "/ mėn.",
+  "free": {
+    "name": "Free",
+    "blurb": "Solo ir pradedantiems. Pagrindinės sąskaitos ir klientai.",
+    "cta": "Pradėti nemokamai",
+    "features": [
+      "Sąskaitos ir PDF",
+      "Klientai ir likučiai",
+      "Mokėjimų žurnalas",
+      "Pagrindinės išlaidos ir kvito nuskaitymas",
+      "DI juodraščiai ribotai"
+    ]
+  },
+  "pro": {
+    "name": "Pro",
+    "blurb": "Neribotos sąskaitos ir klientai, visos ataskaitos ir DI pagalba.",
+    "cta": "Pradėti",
+    "features": [
+      "Neribotos sąskaitos ir klientai",
+      "Išlaidos, mokėjimai, katalogas",
+      "Ataskaitos ir suvestinė",
+      "Kvitų nuskaitymas",
+      "DI pastabos ir priminimų juodraščiai"
+    ]
+  },
+  "business": {
+    "name": "Business",
+    "blurb": "Komandoms ir buhalteriams. Funkcijos rengiamos.",
+    "cta": "Pranešti, kai bus",
+    "features": [
+      "Keli naudotojai (netrukus)",
+      "Rolės ir teisės (netrukus)",
+      "Buhalterio prieiga (netrukus)",
+      "Pasikartojančios sąskaitos (netrukus)",
+      "Automatizavimas (netrukus)"
+    ]
+  }
+}

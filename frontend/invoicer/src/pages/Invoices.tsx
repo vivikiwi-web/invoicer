@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   Search,
@@ -15,22 +16,18 @@ import { SearchInput } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoices, useDeleteInvoice } from "@/hooks/useInvoices";
 import { formatMoney, formatDate, cn } from "@/lib/utils";
 
-const STATUS_TABS = [
-  { key: "all", label: "All" },
-  { key: "draft", label: "Draft" },
-  { key: "sent", label: "Sent" },
-  { key: "paid", label: "Paid" },
-  { key: "overdue", label: "Overdue" },
-];
-
 export default function Invoices() {
+  const { t } = useTranslation("invoices");
+  const { t: tc } = useTranslation("common");
   const nav = useNavigate();
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState({ by: "issue_date", order: "desc" });
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; number: string } | null>(null);
 
   const { data, isLoading } = useInvoices({
     status,
@@ -48,20 +45,22 @@ export default function Invoices() {
     );
   }
 
-  async function onDelete(e, inv) {
-    e.stopPropagation();
-    if (!window.confirm(`Delete invoice ${inv.invoice_number}? This cannot be undone.`)) return;
-    await del.mutateAsync(inv.id);
-  }
+  const STATUS_TABS = [
+    { key: "all", label: t("all") },
+    { key: "draft", label: tc("status.draft") },
+    { key: "sent", label: tc("status.sent") },
+    { key: "paid", label: tc("status.paid") },
+    { key: "overdue", label: tc("status.overdue") },
+  ];
 
   return (
     <div>
       <PageHeader
-        title="Invoices"
-        description="Create, track, and manage every invoice."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button variant="accent" onClick={() => nav("/invoices/new")}>
-            <Plus size={16} /> Create Invoice
+            <Plus size={16} /> {t("create")}
           </Button>
         }
       />
@@ -86,7 +85,7 @@ export default function Invoices() {
         <div className="md:ml-auto md:w-[320px]">
           <SearchInput
             leftIcon={<Search size={16} />}
-            placeholder="Search by number or client..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -102,15 +101,13 @@ export default function Invoices() {
       ) : invoices.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title={search || status !== "all" ? "No matching invoices" : "No invoices yet"}
+          title={search || status !== "all" ? t("emptyFiltered") : t("empty")}
           description={
-            search || status !== "all"
-              ? "Try adjusting your search or filters."
-              : "Create your first invoice to get started."
+            search || status !== "all" ? t("emptyFilteredBody") : t("emptyBody")
           }
           action={
             <Button variant="accent" onClick={() => nav("/invoices/new")}>
-              <Plus size={16} /> Create Invoice
+              <Plus size={16} /> {t("create")}
             </Button>
           }
         />
@@ -118,12 +115,12 @@ export default function Invoices() {
         <Card padding="none" className="overflow-hidden">
           {/* header */}
           <div className="hidden md:grid grid-cols-[1.4fr_1.6fr_1fr_1fr_0.9fr_auto] gap-4 px-5 py-3 border-b border-[var(--border)] text-[11px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-            <span>Invoice</span>
-            <span>Client</span>
-            <SortHead label="Issued" active={sort.by === "issue_date"} order={sort.order} onClick={() => toggleSort("issue_date")} />
-            <SortHead label="Due" active={sort.by === "due_date"} order={sort.order} onClick={() => toggleSort("due_date")} />
-            <SortHead label="Amount" active={sort.by === "total"} order={sort.order} onClick={() => toggleSort("total")} />
-            <span className="text-right">Status</span>
+            <span>{t("colInvoice")}</span>
+            <span>{t("client")}</span>
+            <SortHead label={t("issued")} active={sort.by === "issue_date"} order={sort.order} onClick={() => toggleSort("issue_date")} />
+            <SortHead label={t("due")} active={sort.by === "due_date"} order={sort.order} onClick={() => toggleSort("due_date")} />
+            <SortHead label={t("amount")} active={sort.by === "total"} order={sort.order} onClick={() => toggleSort("total")} />
+            <span className="text-right">{t("status")}</span>
           </div>
 
           <div className="divide-y divide-[var(--border)]">
@@ -137,7 +134,7 @@ export default function Invoices() {
                   {inv.invoice_number}
                 </div>
                 <div className="text-sm text-[var(--ink)] truncate order-3 md:order-none col-span-2 md:col-span-1">
-                  {inv.client_name || <span className="text-[var(--ink-muted)]">No client</span>}
+                  {inv.client_name || <span className="text-[var(--ink-muted)]">{t("noClient")}</span>}
                   {inv.client_company && (
                     <span className="text-[var(--ink-muted)]"> · {inv.client_company}</span>
                   )}
@@ -159,14 +156,17 @@ export default function Invoices() {
                         e.stopPropagation();
                         nav(`/invoices/${inv.id}/edit`);
                       }}
-                      title="Edit"
+                      title={tc("edit")}
                       className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                     >
                       <Pencil size={13} />
                     </button>
                     <button
-                      onClick={(e) => onDelete(e, inv)}
-                      title="Delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPendingDelete({ id: inv.id, number: inv.invoice_number });
+                      }}
+                      title={tc("delete")}
                       className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface)] hover:text-[var(--danger)]"
                     >
                       <Trash2 size={13} />
@@ -178,6 +178,19 @@ export default function Invoices() {
           </div>
         </Card>
       )}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null); }}
+        title={t("deleteTitle")}
+        description={t("deleteBody", { number: pendingDelete?.number })}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        danger
+        onConfirm={async () => {
+          if (pendingDelete) await del.mutateAsync(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }

@@ -1,0 +1,19 @@
+{
+  "title": "Katalogas",
+  "description": "Pakartotinai naudojamos paslaugos ir prekės.",
+  "add": "Pridėti poziciją",
+  "edit": "Redaguoti poziciją",
+  "name": "Pavadinimas",
+  "descriptionLabel": "Aprašymas",
+  "rate": "Kaina",
+  "unit": "Vienetas",
+  "empty": "Katalogas tuščias",
+  "deleteTitle": "Ištrinti poziciją?",
+  "deleteBody": "{{name}} bus pašalinta iš katalogo.",
+  "emptyDesc": "Išsaugokite dažnas paslaugas ir kainas, kad sąskaitos būtų greitesnės.",
+  "nameRequired": "Pavadinimas privalomas",
+  "saveFailed": "Nepavyko išsaugoti pozicijos",
+  "namePlaceholder": "Svetainės kūrimas",
+  "descPlaceholder": "Trumpas aprašymas",
+  "unitPlaceholder": "val. / projektas"
+}

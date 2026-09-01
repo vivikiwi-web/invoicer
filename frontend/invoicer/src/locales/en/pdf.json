@@ -1,0 +1,25 @@
+{
+  "invoice": "INVOICE",
+  "billTo": "Bill To",
+  "issued": "Issued",
+  "due": "Due",
+  "balance": "Balance",
+  "description": "Description",
+  "qty": "Qty",
+  "rate": "Rate",
+  "amount": "Amount",
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "tax": "Tax ({{rate}}%)",
+  "total": "Total",
+  "notes": "Notes",
+  "terms": "Terms",
+  "thanks": "Thank you for your business",
+  "yourCompany": "Your Company",
+  "status": {
+    "draft": "DRAFT",
+    "sent": "SENT",
+    "paid": "PAID",
+    "overdue": "OVERDUE"
+  }
+}

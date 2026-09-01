@@ -1,0 +1,42 @@
+{
+  "main": "Main navigation",
+  "menu": "Menu",
+  "dashboard": "Dashboard",
+  "invoices": "Invoices",
+  "clients": "Clients",
+  "expenses": "Expenses",
+  "payments": "Payments",
+  "items": "Items",
+  "reports": "Reports",
+  "settings": "Settings",
+  "logOut": "Log out",
+  "hello": "Hello, {{name}}.",
+  "helloGuest": "Hello.",
+  "subtitle": "Here's what's happening with your billing today.",
+  "searchPlaceholder": "Search invoices, clients, or jump to a page…",
+  "searchTitle": "Search",
+  "toggleTheme": "Toggle theme",
+  "palette": {
+    "placeholder": "Search or jump to…",
+    "empty": "No matches",
+    "nav": "Navigation",
+    "overview": "Overview",
+    "browse": "Browse & manage",
+    "newInvoice": "New invoice",
+    "manageClients": "Manage clients",
+    "companyAppearance": "Company profile, appearance"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You're all caught up",
+    "overdueOne": "{{count}} overdue invoice",
+    "overdueOther": "{{count}} overdue invoices"
+  },
+  "recentActivity": "Recent activity",
+  "viewAllInvoices": "View all invoices",
+  "nothingHere": "Nothing here yet",
+  "activityHint": "New invoices and payments will show up here.",
+  "paletteNavigate": "to navigate",
+  "paletteSelect": "to select",
+  "paletteResults": "{{count}} results"
+}

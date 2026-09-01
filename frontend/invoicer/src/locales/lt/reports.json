@@ -1,0 +1,31 @@
+{
+  "title": "Ataskaitos",
+  "description": "Pajamos, išlaidos ir senstančios skolos.",
+  "revenue": "Pajamos",
+  "expenses": "Išlaidos",
+  "net": "Grynasis pelnas",
+  "outstanding": "Neapmokėta",
+  "invoiceCount": "Sąskaitų",
+  "monthly": "Mėnesiais",
+  "aging": "Skolų senėjimas",
+  "topClients": "Didžiausi klientai",
+  "statusBreakdown": "Pagal būseną",
+  "billed": "Išrašyta",
+  "paid": "Apmokėta",
+  "agingBuckets": {
+    "current": "Dabartinės",
+    "d30": "1–30 d.",
+    "d60": "31–60 d.",
+    "d90": "61–90 d.",
+    "older": "90+ d."
+  },
+  "exportCsv": "Eksportuoti CSV",
+  "empty": "Ataskaitų duomenų nėra",
+  "emptyBody": "Pridėkite sąskaitas, kad matytumėte analizę.",
+  "revenueVsExpenses": "Pajamos ir išlaidos",
+  "last6": "Apmokėtos pajamos ir išlaidos per 6 mėnesius",
+  "amount": "Suma",
+  "allCaughtUp": "Neapmokėtų sąskaitų nėra.",
+  "noClientBilling": "Klientų apyvartos dar nėra",
+  "byTotalBilled": "Pagal išrašytą sumą"
+}

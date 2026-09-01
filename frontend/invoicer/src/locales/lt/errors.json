@@ -1,0 +1,21 @@
+{
+  "generic": "Užklausa nepavyko",
+  "loginFailed": "Nepavyko prisijungti",
+  "requestFailed": "Užklausa nepavyko",
+  "notFound": "Nerasta",
+  "sessionExpired": "Sesija nebegalioja",
+  "map": {
+    "Email already registered": "Šis el. paštas jau užregistruotas",
+    "Invalid credentials": "Neteisingas el. paštas arba slaptažodis",
+    "Current password is incorrect": "Dabartinis slaptažodis neteisingas",
+    "Invoice not found": "Sąskaita nerasta",
+    "Client not found": "Klientas nerastas",
+    "Session no longer valid": "Sesija nebegalioja",
+    "Invalid or expired session": "Sesija nebegalioja",
+    "GEMINI_API_KEY is not configured on the server.": "DI paslauga šiuo metu nepasiekiama.",
+    "Couldn't save client": "Nepavyko išsaugoti kliento",
+    "Couldn't save invoice": "Nepavyko išsaugoti sąskaitos",
+    "Name is required": "Vardas privalomas",
+    "No fields to update": "Nėra ką atnaujinti"
+  }
+}

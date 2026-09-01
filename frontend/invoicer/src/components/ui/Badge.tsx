@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { HTMLAttributes } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { isEffectiveStatus } from "@shared/types";
 import type { EffectiveStatus } from "@shared/types";
@@ -45,13 +46,14 @@ export function StatusBadge({
   status?: string;
   className?: string;
 }) {
+  const { t } = useTranslation("common");
   const key: EffectiveStatus =
     status && isEffectiveStatus(status) ? status : "draft";
   const s = INVOICE_STATUS[key];
   return (
     <Badge tone={s.tone} className={className}>
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
-      {s.label}
+      {t(`status.${key}`)}
     </Badge>
   );
 }

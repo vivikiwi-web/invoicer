@@ -1,0 +1,25 @@
+{
+  "title": "Frequently asked questions",
+  "items": [
+    {
+      "q": "Can I start for free?",
+      "a": "Yes. The Free plan is for solo invoicing. No credit card required."
+    },
+    {
+      "q": "Do you email payment reminders to my clients?",
+      "a": "No. Invoicer drafts the reminder text. You send it yourself."
+    },
+    {
+      "q": "What language are invoices in?",
+      "a": "Use the app in Lithuanian or English. Each invoice PDF has its own document language."
+    },
+    {
+      "q": "Is my data safe?",
+      "a": "Each account only sees its own records. Passwords are hashed. AI calls stay on the server."
+    },
+    {
+      "q": "When is the team plan available?",
+      "a": "Business is coming soon. Use Notify me or contact us if you want an update."
+    }
+  ]
+}

@@ -1,9 +1,9 @@
-import type { Client } from "@shared/types";
+import type { Client, DocumentLanguage } from "@shared/types";
 import { apiClient } from "./client";
 
 export type ClientPayload = Partial<
-	Pick<Client, "name" | "email" | "company" | "phone" | "address" | "notes">
->;
+	Pick<Client, "name" | "email" | "company" | "phone" | "address" | "notes" | "document_language">
+> & { document_language?: DocumentLanguage | null };
 
 export const clientsApi = {
 	list: () => apiClient.get<{ clients: Client[] }>("/clients").then((r) => r.data.clients),

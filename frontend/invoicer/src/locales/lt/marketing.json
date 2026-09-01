@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "features": "Funkcijos",
+    "ai": "DI",
+    "pricing": "Kainos",
+    "faq": "DUK",
+    "signIn": "Prisijungti",
+    "getStarted": "Pradėti",
+    "menu": "Meniu"
+  },
+  "hero": {
+    "title": "Sąskaitos, kurios dirba už jus",
+    "subtitle": "Kurkite tvarkingas PDF sąskaitas, sekite, kas vis dar skolingas, ir gaukite apmokėjimą be chaoso lentelėse.",
+    "cta": "Pradėti nemokamai",
+    "note": "Nemokamai. Mokėjimo kortelės nereikia.",
+    "badge": "Sąskaitos su DI"
+  },
+  "features": {
+    "title": "Viskas, ko reikia, kad gautumėte apmokėjimą",
+    "invoices": { "title": "Sąskaitos ir PDF", "body": "Išrašykite, siųskite ir atsisiųskite profesionalias sąskaitas." },
+    "clients": { "title": "Klientai ir likučiai", "body": "Matykite, kas skolingas, ir laikykite kontaktus vienoje vietoje." },
+    "payments": { "title": "Mokėjimai", "body": "Registruokite pavedimus ir žinokite, kas jau apmokėta." },
+    "expenses": { "title": "Išlaidos", "body": "Sekite kaštus ir nuskaitinėkite kvitus vietoj rankinio įvedimo." },
+    "reports": { "title": "Ataskaitos", "body": "Pajamos, išlaidos ir senstančios skolos — be papildomo darbo." },
+    "catalog": { "title": "Katalogas", "body": "Išsaugokite paslaugas ir kainas, kad kitos sąskaitos būtų greitesnės." }
+  },
+  "ai": {
+    "title": "DI, kuris taupo laiką",
+    "subtitle": "Kvitai, priminimų tekstai ir pajamų santraukos — jūs vis tiek sprendžiate, ką siųsti.",
+    "receipts": "Nuskaitykite kvitą ir gaukite eilutes bei sumas.",
+    "reminders": "Paruoškite mandagų ar griežtesnį priminimo juodraštį — siuntimas lieka jums.",
+    "summary": "Trumpa mėnesio pajamų ir vėluojančių sąskaitų santrauka.",
+    "receiptsTitle": "Kvitų nuskaitymas",
+    "remindersTitle": "Priminimai",
+    "summaryTitle": "Mėnesio santrauka"
+  },
+  "security": {
+    "title": "Jūsų duomenys lieka jūsų",
+    "body": "Kiekviena paskyra atskirta. Slaptažodžiai saugomi maišos pavidalu. DI kvietimai eina tik per mūsų serverį."
+  },
+  "marquee": ["PDF sąskaitos", "Kvitų nuskaitymas", "Mokėjimai", "Išlaidos", "Ataskaitos", "Likučiai"],
+  "cta": {
+    "title": "Pradėkite šiandien",
+    "body": "Sukurkite pirmą sąskaitą per kelias minutes.",
+    "button": "Sukurti paskyrą"
+  },
+  "footer": {
+    "product": "Produktas",
+    "account": "Paskyra",
+    "legal": "Teisinė informacija",
+    "language": "Kalba",
+    "pricing": "Kainos",
+    "features": "Funkcijos",
+    "login": "Prisijungti",
+    "register": "Registracija"
+  },
+  "meta": {
+    "homeTitle": "Invoicer — sąskaitos, kurios dirba už jus",
+    "homeDescription": "Kurkite PDF sąskaitas, sekite klientus ir mokėjimus, nuskaitinėkite kvitus. Nemokamai pradėti.",
+    "pricingTitle": "Kainos — Invoicer",
+    "pricingDescription": "Nemokamas planas ir Pro. Verslui — netrukus."
+  }
+}

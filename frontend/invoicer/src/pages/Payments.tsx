@@ -1,45 +1,70 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Plus, Wallet, Trash2, X, Loader2, CreditCard } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton, StatCardSkeleton } from "@/components/ui/Skeleton";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Combobox } from "@/components/ui/Combobox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { usePayments, usePaymentMutations } from "@/hooks/useFeatures";
 import { useInvoices } from "@/hooks/useInvoices";
+import { useSettings } from "@/hooks/useSettings";
 import { formatMoney, formatDate, errorMessage } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
+
+const METHODS = [
+  { value: "Bank transfer", key: "bank" },
+  { value: "Credit card", key: "card" },
+  { value: "Check", key: "check" },
+  { value: "PayPal", key: "paypal" },
+  { value: "Cash", key: "cash" },
+  { value: "Other", key: "other" },
+] as const;
 
 export default function Payments() {
+  const { t } = useTranslation("payments");
+  const { t: tc } = useTranslation("common");
+  const { t: ti } = useTranslation("invoices");
   const { data, isLoading } = usePayments();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const { remove } = usePaymentMutations();
   const [modalOpen, setModalOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const payments = data?.payments || [];
-
-  async function onDelete(p) {
-    if (!window.confirm(`Remove this ${formatMoney(p.amount)} payment? The invoice may revert to unpaid.`)) return;
-    await remove.mutateAsync(p.id);
-  }
 
   return (
     <div>
       <PageHeader
-        title="Payments"
-        description="A ledger of every payment received against your invoices."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button variant="accent" onClick={() => setModalOpen(true)}>
-            <Plus size={16} /> Record Payment
+            <Plus size={16} /> {t("add")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6 max-w-2xl">
-        <StatCard label="Total received" value={formatMoney(data?.totals?.total || 0)} icon={Wallet} accent />
-        <StatCard label="Received this month" value={formatMoney(data?.totals?.this_month || 0)} icon={CreditCard} />
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard label={t("received")} value={formatMoney(data?.totals?.total || 0, currency)} icon={Wallet} accent />
+            <StatCard label={t("thisMonth")} value={formatMoney(data?.totals?.this_month || 0, currency)} icon={CreditCard} />
+          </>
+        )}
       </div>
 
       {isLoading ? (
@@ -47,14 +72,18 @@ export default function Payments() {
       ) : payments.length === 0 ? (
         <EmptyState
           icon={Wallet}
-          title="No payments recorded"
-          description="Record a payment against an invoice to build your ledger."
-          action={<Button variant="accent" onClick={() => setModalOpen(true)}><Plus size={16} /> Record Payment</Button>}
+          title={t("empty")}
+          description={t("description")}
+          action={<Button variant="accent" onClick={() => setModalOpen(true)}><Plus size={16} /> {t("add")}</Button>}
         />
       ) : (
         <Card padding="none" className="overflow-hidden">
           <div className="hidden md:grid grid-cols-[1fr_1.4fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-[var(--border)] text-[11px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-            <span>Date</span><span>Invoice / Client</span><span>Method</span><span className="text-right">Amount</span><span></span>
+            <span>{t("date")}</span>
+            <span>{t("invoiceClient")}</span>
+            <span>{t("method")}</span>
+            <span className="text-right">{t("amount")}</span>
+            <span></span>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {payments.map((p) => (
@@ -62,13 +91,19 @@ export default function Payments() {
                 <div className="text-sm text-[var(--ink-muted)] tabular">{formatDate(p.paid_on)}</div>
                 <div className="order-3 md:order-none col-span-2 md:col-span-1 min-w-0">
                   <div className="text-sm font-semibold text-[var(--ink)] tabular truncate">{p.invoice_number}</div>
-                  <div className="text-xs text-[var(--ink-muted)] truncate">{p.client_name || "No client"}</div>
+                  <div className="text-xs text-[var(--ink-muted)] truncate">{p.client_name || ti("noClient")}</div>
                 </div>
                 <div className="hidden md:block">
-                  {p.method ? <Badge tone="neutral">{p.method}</Badge> : <span className="text-xs text-[var(--ink-muted)]">—</span>}
+                  {p.method ? <Badge tone="neutral">{p.method}</Badge> : <span className="text-xs text-[var(--ink-muted)]">{tc("emDash")}</span>}
                 </div>
-                <div className="text-sm font-semibold text-[var(--success)] tabular text-right">{formatMoney(p.amount)}</div>
-                <button onClick={() => onDelete(p)} className="justify-self-end h-7 w-7 rounded-full flex items-center justify-center text-[var(--ink-muted)] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--surface-2)] hover:text-[var(--danger)]">
+                <div className="text-sm font-semibold text-[var(--success)] tabular text-right">
+                  {formatMoney(p.amount, p.invoice_currency || currency)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingDelete(p.id)}
+                  className="justify-self-end h-7 w-7 rounded-full flex items-center justify-center text-[var(--ink-muted)] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--surface-2)] hover:text-[var(--danger)]"
+                >
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -78,23 +113,36 @@ export default function Payments() {
       )}
 
       <RecordPaymentModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null); }}
+        title={t("deleteTitle")}
+        description={t("deleteBody")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        danger
+        onConfirm={async () => {
+          if (pendingDelete) await remove.mutateAsync(pendingDelete);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
 
-const METHODS = ["Bank transfer", "Credit card", "Check", "PayPal", "Cash", "Other"];
-
-function RecordPaymentModal({ open, onClose }) {
+function RecordPaymentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation("payments");
+  const { t: tc } = useTranslation("common");
+  const { t: ti } = useTranslation("invoices");
   const { data: invoices } = useInvoices();
   const { create } = usePaymentMutations();
   const [form, setForm] = useState({ invoiceId: "", amount: "", method: "Bank transfer", paid_on: "", notes: "" });
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Unpaid invoices first — those are what you'd normally record against.
   const options = useMemo(
     () => (invoices || []).filter((i) => i.effective_status !== "paid").concat((invoices || []).filter((i) => i.effective_status === "paid")),
-    [invoices]
+    [invoices],
   );
 
   useEffect(() => {
@@ -104,28 +152,27 @@ function RecordPaymentModal({ open, onClose }) {
     }
   }, [open]);
 
-  function pickInvoice(id) {
+  function pickInvoice(id: string) {
     const inv = (invoices || []).find((i) => i.id === id);
     setForm((f) => ({ ...f, invoiceId: id, amount: inv ? String(inv.total) : f.amount }));
   }
 
-  async function onSubmit(e) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!form.invoiceId) return setErr("Select an invoice");
-    if (!(Number(form.amount) > 0)) return setErr("Enter a valid amount");
+    if (!form.invoiceId) return setErr(t("selectInvoice"));
+    if (!(Number(form.amount) > 0)) return setErr(t("amountRequired"));
     setSaving(true);
     setErr("");
     try {
       await create.mutateAsync({ ...form, amount: Number(form.amount) });
+      analytics.track("payment_recorded");
       onClose();
     } catch (ex) {
-      setErr(errorMessage(ex, "Couldn't record payment"));
+      setErr(errorMessage(ex, t("saveFailed")));
     } finally {
       setSaving(false);
     }
   }
-
-  const selectClass = "h-10 w-full rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/15";
 
   return (
     <AnimatePresence>
@@ -141,43 +188,56 @@ function RecordPaymentModal({ open, onClose }) {
             className="relative w-full max-w-[480px] rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-hover p-6"
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold tracking-tight">Record payment</h3>
+              <h3 className="font-display text-lg font-semibold tracking-tight">{t("recordTitle")}</h3>
               <button type="button" onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface-2)]"><X size={16} /></button>
             </div>
             <div className="space-y-3">
-              <Field label="Invoice *">
-                <select className={selectClass} value={form.invoiceId} onChange={(e) => pickInvoice(e.target.value)}>
-                  <option value="">— Select an invoice —</option>
-                  {options.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.invoice_number} · {i.client_name || "No client"} · {formatMoney(i.total, i.currency)}{i.effective_status === "paid" ? " (paid)" : ""}
-                    </option>
-                  ))}
-                </select>
+              <Field label={`${t("invoice")} *`}>
+                <Combobox
+                  value={form.invoiceId}
+                  onValueChange={pickInvoice}
+                  placeholder={t("selectInvoice")}
+                  searchPlaceholder={t("selectInvoice")}
+                  emptyMessage={tc("noResults")}
+                  items={options.map((i) => ({
+                    value: i.id,
+                    label: `${i.invoice_number} · ${i.client_name || ti("noClient")}`,
+                    hint: `${formatMoney(i.total, i.currency)} · ${tc(`status.${i.effective_status}`)}`,
+                    group: i.effective_status === "paid" ? tc("status.paid") : undefined,
+                    keywords: `${i.client_name || ""} ${i.invoice_number}`,
+                  }))}
+                />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Amount *">
+                <Field label={`${t("amount")} *`}>
                   <Input type="number" min="0" step="0.01" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} className="tabular" placeholder="0.00" />
                 </Field>
-                <Field label="Date">
+                <Field label={t("date")}>
                   <Input type="date" value={form.paid_on} onChange={(e) => setForm((f) => ({ ...f, paid_on: e.target.value }))} />
                 </Field>
               </div>
-              <Field label="Method">
-                <select className={selectClass} value={form.method} onChange={(e) => setForm((f) => ({ ...f, method: e.target.value }))}>
-                  {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
+              <Field label={t("method")}>
+                <Select value={form.method} onValueChange={(v) => setForm((f) => ({ ...f, method: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {METHODS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{t(`methods.${m.key}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
-              <Field label="Notes">
-                <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Reference / memo" />
+              <Field label={t("notes")}>
+                <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={t("notesPlaceholder")} />
               </Field>
             </div>
             {err && <p className="text-sm text-[var(--danger)] mt-3">{err}</p>}
             <div className="flex items-center justify-end gap-2 mt-6">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={onClose}>{tc("cancel")}</Button>
               <Button type="submit" variant="accent" disabled={saving}>
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                Record payment
+                {t("add")}
               </Button>
             </div>
           </motion.form>

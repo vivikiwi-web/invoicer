@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   Trash2,
@@ -8,13 +9,15 @@ import {
   Loader2,
   Sparkles,
   ScanLine,
-  Package,
   X,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { PageSpinner } from "@/components/ui/Spinner";
 import { Input } from "@/components/ui/Input";
+import { Combobox } from "@/components/ui/Combobox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { InvoiceEditorSkeleton } from "@/components/ui/Skeleton";
+import { ClientFormModal } from "@/components/clients/ClientFormModal";
 import { useClients } from "@/hooks/useClients";
 import { useSettings } from "@/hooks/useSettings";
 import { useItems } from "@/hooks/useFeatures";
@@ -25,10 +28,12 @@ import {
 } from "@/hooks/useInvoices";
 import { aiApi } from "@/api/ai";
 import { CURRENCIES, formatMoney, toDateInput, cn, errorMessage } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 import { computeTotals } from "@shared/invoice";
 import {
   isInvoiceStatus,
   type CatalogItem,
+  type DocumentLanguage,
   type InvoiceStatus,
   type ReceiptParseResult,
 } from "@shared/types";
@@ -46,6 +51,7 @@ interface EditorForm {
   discount: number;
   notes: string;
   terms: string;
+  document_language: DocumentLanguage;
   items: EditorItem[];
 }
 
@@ -59,6 +65,8 @@ function plusDays(days: number) {
 }
 
 export default function InvoiceEditor() {
+  const { t } = useTranslation("invoices");
+  const { t: tc } = useTranslation("common");
   const { id } = useParams();
   const isEdit = !!id;
   const nav = useNavigate();
@@ -74,8 +82,9 @@ export default function InvoiceEditor() {
   const [form, setForm] = useState<EditorForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [clientModal, setClientModal] = useState(false);
+  const [langTouched, setLangTouched] = useState(false);
 
-  // Initialize the form (from settings for new, from existing for edit).
   useEffect(() => {
     if (isEdit) {
       if (existing && !form) {
@@ -89,6 +98,7 @@ export default function InvoiceEditor() {
           discount: Number(existing.discount) || 0,
           notes: existing.notes || "",
           terms: existing.terms || "",
+          document_language: existing.document_language === "en" ? "en" : "lt",
           items: existing.items?.length
             ? existing.items.map((it) => ({
                 description: it.description,
@@ -97,22 +107,27 @@ export default function InvoiceEditor() {
               }))
             : [blankItem()],
         });
+        setLangTouched(true);
       }
     } else if (!form && settings) {
+      const client = (clients || []).find((c) => c.id === preselectClient);
+      const docLang: DocumentLanguage =
+        client?.document_language || settings.default_document_language || "lt";
       setForm({
         client_id: preselectClient,
         status: "draft",
         issue_date: todayISO(),
         due_date: plusDays(30),
-        currency: settings.currency || "USD",
+        currency: settings.currency || "EUR",
         tax_rate: Number(settings.tax_rate) || 0,
         discount: 0,
         notes: "",
-        terms: "Payment due within 30 days.",
+        terms: t("defaultTerms"),
+        document_language: docLang,
         items: [blankItem()],
       });
     }
-  }, [isEdit, existing, settings, form, preselectClient]);
+  }, [isEdit, existing, settings, form, preselectClient, clients, t]);
 
   const totals = useMemo(() => {
     if (!form) return { subtotal: 0, discount: 0, taxAmount: 0, total: 0 };
@@ -120,7 +135,7 @@ export default function InvoiceEditor() {
   }, [form]);
 
   if (!form || (isEdit && loadingInvoice)) {
-    return <PageSpinner />;
+    return <InvoiceEditorSkeleton />;
   }
 
   const set = (patch: Partial<EditorForm>) =>
@@ -153,6 +168,16 @@ export default function InvoiceEditor() {
       return { ...f, items: next.length ? next : [blankItem()] };
     });
 
+  function onClientChange(clientId: string) {
+    const client = (clients || []).find((c) => c.id === clientId);
+    const patch: Partial<EditorForm> = { client_id: clientId };
+    if (!langTouched) {
+      patch.document_language =
+        client?.document_language || settings?.default_document_language || "lt";
+    }
+    set(patch);
+  }
+
   async function onSave(overrideStatus?: InvoiceStatus) {
     if (!form) return;
     setErr("");
@@ -178,23 +203,29 @@ export default function InvoiceEditor() {
         isEdit && id
           ? await update.mutateAsync({ id, payload })
           : await create.mutateAsync(payload);
+      if (!isEdit) analytics.track("invoice_created");
       nav(`/invoices/${inv.id}`);
     } catch (e) {
-      setErr(errorMessage(e, "Couldn't save invoice"));
+      setErr(errorMessage(e, t("saveFailed")));
     } finally {
       setSaving(false);
     }
   }
 
-  const selectClass =
-    "h-10 w-full rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/15";
-  const symbol = CURRENCIES.find((c) => c.code === form.currency)?.symbol || "$";
+  const symbol = CURRENCIES.find((c) => c.code === form.currency)?.symbol || "€";
+  const clientItems = (clients || []).map((c) => ({
+    value: c.id,
+    label: c.name,
+    keywords: `${c.company} ${c.email}`,
+    hint: [c.company, c.email].filter(Boolean).join(" · "),
+  }));
 
   return (
     <div className="max-w-[1100px]">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => nav(-1)}
             className="h-9 w-9 rounded-full flex items-center justify-center border border-[var(--border)] bg-[var(--surface)] text-[var(--ink-muted)] hover:text-[var(--ink)] shadow-card"
           >
@@ -202,20 +233,20 @@ export default function InvoiceEditor() {
           </button>
           <div>
             <h2 className="font-display text-2xl font-semibold tracking-tight">
-              {isEdit ? "Edit invoice" : "New invoice"}
+              {isEdit ? t("edit") : t("new")}
             </h2>
             <p className="text-sm text-[var(--ink-muted)]">
-              {isEdit ? existing?.invoice_number : "A number is assigned automatically on save"}
+              {isEdit ? existing?.invoice_number : t("numberAssigned")}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => onSave("draft")} disabled={saving}>
-            Save draft
+            {tc("actions.saveDraft")}
           </Button>
           <Button variant="accent" onClick={() => onSave()} disabled={saving}>
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            Save
+            {tc("save")}
           </Button>
         </div>
       </div>
@@ -227,91 +258,112 @@ export default function InvoiceEditor() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left — main details */}
         <div className="lg:col-span-2 space-y-5">
-          {/* meta */}
           <Card padding="lg">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Client">
-                <select
-                  className={selectClass}
+              <Field label={t("client")}>
+                <Combobox
                   value={form.client_id}
-                  onChange={(e) => set({ client_id: e.target.value })}
-                >
-                  <option value="">— No client —</option>
-                  {(clients || []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                      {c.company ? ` (${c.company})` : ""}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={onClientChange}
+                  items={[{ value: "", label: t("noClient") }, ...clientItems]}
+                  placeholder={t("noClient")}
+                  searchPlaceholder={t("searchPlaceholder")}
+                  emptyMessage={tc("noResults")}
+                  footer={
+                    <button
+                      type="button"
+                      onClick={() => setClientModal(true)}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--accent-strong)] hover:bg-[var(--surface-2)]"
+                    >
+                      <Plus size={14} /> {t("createClient")}
+                    </button>
+                  }
+                />
               </Field>
-              <Field label="Status">
-                <select
-                  className={selectClass}
+              <Field label={t("status")}>
+                <Select
                   value={form.status}
-                  onChange={(e) => {
-                    if (isInvoiceStatus(e.target.value)) set({ status: e.target.value });
+                  onValueChange={(v) => {
+                    if (isInvoiceStatus(v)) set({ status: v });
                   }}
                 >
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="paid">Paid</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">{tc("status.draft")}</SelectItem>
+                    <SelectItem value="sent">{tc("status.sent")}</SelectItem>
+                    <SelectItem value="paid">{tc("status.paid")}</SelectItem>
+                  </SelectContent>
+                </Select>
               </Field>
-              <Field label="Issue date">
+              <Field label={t("issueDate")}>
                 <Input
                   type="date"
                   value={form.issue_date}
                   onChange={(e) => set({ issue_date: e.target.value })}
                 />
               </Field>
-              <Field label="Due date">
+              <Field label={t("dueDate")}>
                 <Input
                   type="date"
                   value={form.due_date}
                   onChange={(e) => set({ due_date: e.target.value })}
                 />
               </Field>
+              <Field label={tc("documentLanguage.label")}>
+                <Select
+                  value={form.document_language}
+                  onValueChange={(v) => {
+                    setLangTouched(true);
+                    if (v === "lt" || v === "en") set({ document_language: v });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lt">{tc("documentLanguage.lt")}</SelectItem>
+                    <SelectItem value="en">{tc("documentLanguage.en")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </Card>
 
-          {/* line items */}
           <Card padding="lg">
             <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-              <CardTitle>Line items</CardTitle>
+              <CardTitle>{t("lineItems")}</CardTitle>
               <div className="flex items-center gap-2">
-                <CatalogPicker onPick={addCatalogItem} />
+                <CatalogPicker onPick={addCatalogItem} currency={form.currency} />
                 <ReceiptScanButton
-                onParsed={(res) => {
-                  set({
-                    items: res.lineItems?.length
-                      ? res.lineItems.map((li) => ({
-                          description: li.description || res.vendor || "Item",
-                          quantity: Number(li.quantity) || 1,
-                          rate: Number(li.rate) || 0,
-                        }))
-                      : [
-                          {
-                            description: res.vendor || "Expense",
-                            quantity: 1,
-                            rate: Number(res.total) || 0,
-                          },
-                        ],
-                    notes: res.notes || form.notes,
-                  });
-                }}
+                  onParsed={(res) => {
+                    set({
+                      items: res.lineItems?.length
+                        ? res.lineItems.map((li) => ({
+                            description: li.description || res.vendor || "Item",
+                            quantity: Number(li.quantity) || 1,
+                            rate: Number(li.rate) || 0,
+                          }))
+                        : [
+                            {
+                              description: res.vendor || "Expense",
+                              quantity: 1,
+                              rate: Number(res.total) || 0,
+                            },
+                          ],
+                      notes: res.notes || form.notes,
+                    });
+                  }}
                 />
               </div>
             </div>
 
-            {/* header row */}
             <div className="hidden sm:grid grid-cols-[1fr_80px_110px_110px_32px] gap-3 px-1 pb-2 text-[11px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-              <span>Description</span>
-              <span className="text-right">Qty</span>
-              <span className="text-right">Rate</span>
-              <span className="text-right">Amount</span>
+              <span>{t("descriptionCol")}</span>
+              <span className="text-right">{t("qty")}</span>
+              <span className="text-right">{t("rate")}</span>
+              <span className="text-right">{t("amount")}</span>
               <span></span>
             </div>
 
@@ -323,7 +375,7 @@ export default function InvoiceEditor() {
                 >
                   <Input
                     className="col-span-2 sm:col-span-1 rounded-xl"
-                    placeholder="Description of work or item"
+                    placeholder={t("itemPlaceholder")}
                     value={it.description}
                     onChange={(e) => setItem(i, { description: e.target.value })}
                   />
@@ -347,9 +399,10 @@ export default function InvoiceEditor() {
                     {formatMoney((Number(it.quantity) || 0) * (Number(it.rate) || 0), form.currency)}
                   </div>
                   <button
+                    type="button"
                     onClick={() => removeItem(i)}
                     className="h-8 w-8 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:text-[var(--danger)] hover:bg-[var(--surface-2)] justify-self-end"
-                    title="Remove line"
+                    title={t("removeLine")}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -358,50 +411,51 @@ export default function InvoiceEditor() {
             </div>
 
             <Button variant="ghost" size="sm" className="mt-3" onClick={addItem}>
-              <Plus size={14} /> Add line item
+              <Plus size={14} /> {t("addLine")}
             </Button>
           </Card>
 
-          {/* notes */}
           <Card padding="lg" className="space-y-4">
             <NoteField
-              label="Notes"
+              label={t("notes")}
               value={form.notes}
               onChange={(v) => set({ notes: v })}
-              placeholder="Notes visible to the client..."
+              placeholder={t("notesPlaceholder")}
               aiKind="description"
+              documentLanguage={form.document_language}
               aiContext={{ items: form.items, client: clientById(clients, form.client_id) }}
             />
             <NoteField
-              label="Payment terms"
+              label={t("terms")}
               value={form.terms}
               onChange={(v) => set({ terms: v })}
-              placeholder="e.g. Payment due within 30 days."
+              placeholder={t("termsPlaceholder")}
               aiKind="terms"
+              documentLanguage={form.document_language}
               aiContext={{ items: form.items }}
             />
           </Card>
         </div>
 
-        {/* Right — totals */}
         <div className="space-y-5">
           <Card padding="lg" className="lg:sticky lg:top-4">
-            <CardTitle className="mb-4">Summary</CardTitle>
+            <CardTitle className="mb-4">{t("summary")}</CardTitle>
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <Field label="Currency">
-                <select
-                  className={selectClass}
-                  value={form.currency}
-                  onChange={(e) => set({ currency: e.target.value })}
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code}
-                    </option>
-                  ))}
-                </select>
+              <Field label={tc("currency")}>
+                <Select value={form.currency} onValueChange={(v) => set({ currency: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
-              <Field label="Tax %">
+              <Field label={t("taxPercent")}>
                 <Input
                   type="number"
                   min="0"
@@ -412,7 +466,7 @@ export default function InvoiceEditor() {
                 />
               </Field>
             </div>
-            <Field label={`Discount (${symbol})`} className="mb-4">
+            <Field label={`${t("discount")} (${symbol})`} className="mb-4">
               <Input
                 type="number"
                 min="0"
@@ -424,16 +478,16 @@ export default function InvoiceEditor() {
             </Field>
 
             <div className="space-y-2 pt-4 border-t border-[var(--border)] text-sm">
-              <Row label="Subtotal" value={formatMoney(totals.subtotal, form.currency)} />
+              <Row label={t("subtotal")} value={formatMoney(totals.subtotal, form.currency)} />
               {(totals.discount ?? 0) > 0 && (
-                <Row label="Discount" value={`− ${formatMoney(totals.discount ?? 0, form.currency)}`} />
+                <Row label={t("discount")} value={`− ${formatMoney(totals.discount ?? 0, form.currency)}`} />
               )}
               <Row
-                label={`Tax (${Number(form.tax_rate) || 0}%)`}
+                label={`${t("tax")} (${Number(form.tax_rate) || 0}%)`}
                 value={formatMoney(totals.taxAmount, form.currency)}
               />
               <div className="flex items-center justify-between pt-3 mt-1 border-t border-[var(--border)]">
-                <span className="font-display font-semibold">Total</span>
+                <span className="font-display font-semibold">{t("total")}</span>
                 <span className="font-display text-xl font-semibold tabular text-[var(--accent-strong)]">
                   {formatMoney(totals.total, form.currency)}
                 </span>
@@ -442,6 +496,17 @@ export default function InvoiceEditor() {
           </Card>
         </div>
       </div>
+
+      <ClientFormModal
+        open={clientModal}
+        onClose={() => setClientModal(false)}
+        onCreated={(client) => {
+          set({ client_id: client.id });
+          if (!langTouched && client.document_language) {
+            set({ document_language: client.document_language });
+          }
+        }}
+      />
     </div>
   );
 }
@@ -476,7 +541,8 @@ function Row({ label, value }) {
   );
 }
 
-function NoteField({ label, value, onChange, placeholder, aiKind, aiContext }) {
+function NoteField({ label, value, onChange, placeholder, aiKind, aiContext, documentLanguage }) {
+  const { t } = useTranslation("invoices");
   const [loading, setLoading] = useState(false);
   async function writeWithAI() {
     setLoading(true);
@@ -484,12 +550,20 @@ function NoteField({ label, value, onChange, placeholder, aiKind, aiContext }) {
       const text = await aiApi.writeNote({
         kind: aiKind,
         prompt: value?.trim() || undefined,
-        items: (aiContext?.items || []).filter((it) => it.description),
+        items: (aiContext?.items || [])
+          .filter((it) => it.description)
+          .map((it) => ({
+            description: it.description,
+            quantity: it.quantity,
+            rate: it.rate,
+          })),
         client: aiContext?.client ? { name: aiContext.client.name } : undefined,
+        document_language: documentLanguage,
       });
       onChange(text);
+      analytics.track("ai_action_used", { kind: aiKind === "terms" ? "invoice_terms" : "invoice_notes" });
     } catch {
-      /* surfaced elsewhere; keep field intact */
+      /* keep field intact */
     } finally {
       setLoading(false);
     }
@@ -499,12 +573,13 @@ function NoteField({ label, value, onChange, placeholder, aiKind, aiContext }) {
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs font-medium text-[var(--ink-muted)]">{label}</span>
         <button
+          type="button"
           onClick={writeWithAI}
           disabled={loading}
           className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-strong)] hover:underline disabled:opacity-50"
         >
           {loading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-          Write with AI
+          {t("writeWithAi")}
         </button>
       </div>
       <textarea
@@ -518,52 +593,39 @@ function NoteField({ label, value, onChange, placeholder, aiKind, aiContext }) {
   );
 }
 
-function CatalogPicker({ onPick }: { onPick: (item: CatalogItem) => void }) {
-  const { data: items } = useItems();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+function CatalogPicker({ onPick, currency }: { onPick: (item: CatalogItem) => void; currency: string }) {
+  const { t } = useTranslation("invoices");
+  const { t: tc } = useTranslation("common");
+  const { data: items, isLoading } = useItems();
+  const [value, setValue] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e) => {
-      if (!ref.current?.contains(e.target)) setOpen(false);
-    };
-    window.addEventListener("mousedown", onClick);
-    return () => window.removeEventListener("mousedown", onClick);
-  }, [open]);
-
-  if (!items?.length) return null;
+  if (!items?.length && !isLoading) return null;
 
   return (
-    <div ref={ref} className="relative">
-      <Button type="button" variant="soft" size="sm" onClick={() => setOpen((v) => !v)}>
-        <Package size={13} /> From catalog
-      </Button>
-      {open && (
-        <div className="absolute right-0 top-10 z-20 w-64 max-h-72 overflow-y-auto rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-hover p-1.5">
-          {items.map((it) => (
-            <button
-              key={it.id}
-              type="button"
-              onClick={() => {
-                onPick(it);
-                setOpen(false);
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left hover:bg-[var(--surface-2)] transition-colors"
-            >
-              <span className="text-sm text-[var(--ink)] truncate">{it.name}</span>
-              <span className="text-xs font-semibold tabular text-[var(--accent-strong)] shrink-0">
-                {formatMoney(it.rate)}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="w-56">
+      <Combobox
+        value={value}
+        onValueChange={(id) => {
+          const item = (items || []).find((it) => it.id === id);
+          if (item) onPick(item);
+          setValue("");
+        }}
+        items={(items || []).map((it) => ({
+          value: it.id,
+          label: it.name,
+          hint: formatMoney(it.rate, currency),
+        }))}
+        placeholder={t("fromCatalog")}
+        searchPlaceholder={t("fromCatalog")}
+        emptyMessage={tc("noResults")}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
 
 function ReceiptScanButton({ onParsed }: { onParsed: (res: ReceiptParseResult) => void }) {
+  const { t } = useTranslation("invoices");
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -576,9 +638,11 @@ function ReceiptScanButton({ onParsed }: { onParsed: (res: ReceiptParseResult) =
     setLoading(true);
     try {
       const res = await aiApi.receiptParse(file);
+      analytics.track("receipt_scanned");
+      analytics.track("ai_action_used", { kind: "receipt_scan" });
       onParsed(res);
     } catch (ex) {
-      setErr(errorMessage(ex, "Couldn't read receipt"));
+      setErr(errorMessage(ex, t("receiptFailed")));
     } finally {
       setLoading(false);
     }
@@ -589,7 +653,7 @@ function ReceiptScanButton({ onParsed }: { onParsed: (res: ReceiptParseResult) =
       {err && (
         <span className="text-[11px] text-[var(--danger)] flex items-center gap-1">
           {err}
-          <button onClick={() => setErr("")}>
+          <button type="button" onClick={() => setErr("")}>
             <X size={11} />
           </button>
         </span>
@@ -603,7 +667,7 @@ function ReceiptScanButton({ onParsed }: { onParsed: (res: ReceiptParseResult) =
       />
       <Button variant="soft" size="sm" onClick={() => inputRef.current?.click()} disabled={loading}>
         {loading ? <Loader2 size={13} className="animate-spin" /> : <ScanLine size={13} />}
-        Scan receipt
+        {t("scanReceipt")}
       </Button>
     </div>
   );

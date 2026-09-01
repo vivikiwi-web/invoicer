@@ -29,10 +29,13 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { DetailSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ClientFormModal } from "@/components/clients/ClientFormModal";
 import { useClient, useDeleteClient } from "@/hooks/useClients";
-import { formatMoney, formatDate } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
+import { formatMoney, formatDate, formatMonthLabel } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 function isOverdue(inv) {
   return inv.status === "sent" && inv.due_date && new Date(inv.due_date) < new Date();
@@ -65,7 +68,7 @@ function computeInsights(invoices, stats) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     monthly.push({
-      label: d.toLocaleString("en-US", { month: "short" }),
+      label: formatMonthLabel(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`),
       value: Math.round((map[key] || 0) * 100) / 100,
     });
   }
@@ -80,11 +83,16 @@ function computeInsights(invoices, stats) {
 }
 
 export default function ClientDetail() {
+  const { t } = useTranslation("clients");
+  const { t: tc } = useTranslation("common");
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const { id } = useParams();
   const nav = useNavigate();
   const { data, isLoading, error } = useClient(id);
   const del = useDeleteClient();
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const insights = useMemo(
     () =>
@@ -95,19 +103,13 @@ export default function ClientDetail() {
   const stats = data?.stats || { count: 0, totalBilled: 0, outstanding: 0 };
 
   if (isLoading) {
-    return <PageSpinner />;
+    return <DetailSkeleton />;
   }
   if (error || !data?.client) {
-    return <EmptyState icon={Mail} title="Client not found" description="It may have been deleted." />;
+    return <EmptyState icon={Mail} title={t("notFound")} description={t("notFoundBody")} />;
   }
 
   const client = data.client;
-
-  async function onDelete() {
-    if (!window.confirm(`Delete ${client.name}? Their invoices will be kept but unlinked.`)) return;
-    await del.mutateAsync(client.id);
-    nav("/clients");
-  }
 
   return (
     <div>
@@ -134,12 +136,12 @@ export default function ClientDetail() {
             variant="accent"
             onClick={() => nav(`/invoices/new?client=${id}`)}
           >
-            <Plus size={15} /> New Invoice
+            <Plus size={15} /> {t("newInvoice")}
           </Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil size={15} /> Edit
+            <Pencil size={15} /> {tc("edit")}
           </Button>
-          <Button variant="ghost" onClick={onDelete} className="text-[var(--danger)] hover:bg-[var(--danger)]/10">
+          <Button variant="ghost" onClick={() => setConfirmDelete(true)} className="text-[var(--danger)] hover:bg-[var(--danger)]/10">
             <Trash2 size={15} />
           </Button>
         </div>
@@ -147,16 +149,16 @@ export default function ClientDetail() {
 
       {/* Stats — full-width row so currency values have room */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-        <MiniStat label="Invoices" value={stats.count} />
-        <MiniStat label="Total billed" value={formatMoney(stats.totalBilled)} />
-        <MiniStat label="Outstanding" value={formatMoney(stats.outstanding)} warn={stats.outstanding > 0} />
+        <MiniStat label={t("invoices")} value={stats.count} />
+        <MiniStat label={t("totalBilled")} value={formatMoney(stats.totalBilled, currency)} />
+        <MiniStat label={t("outstanding")} value={formatMoney(stats.outstanding, currency)} warn={stats.outstanding > 0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Left: contact */}
         <div className="space-y-5">
           <Card padding="lg">
-            <CardTitle className="mb-4">Contact</CardTitle>
+            <CardTitle className="mb-4">{t("contact")}</CardTitle>
             <div className="space-y-3">
               <ContactRow icon={Mail} value={client.email} href={client.email ? `mailto:${client.email}` : null} />
               <ContactRow icon={Phone} value={client.phone} />
@@ -166,7 +168,7 @@ export default function ClientDetail() {
             {client.notes && (
               <div className="mt-4 pt-4 border-t border-[var(--border)]">
                 <div className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold mb-1">
-                  Notes
+                  {t("notes")}
                 </div>
                 <p className="text-sm text-[var(--ink)]">{client.notes}</p>
               </div>
@@ -177,12 +179,12 @@ export default function ClientDetail() {
         {/* Right: invoice history */}
         <div className="lg:col-span-2">
           <Card padding="lg">
-            <CardTitle className="mb-4">Invoice history</CardTitle>
+            <CardTitle className="mb-4">{t("history")}</CardTitle>
             {invoices.length === 0 ? (
               <div className="py-10 text-center">
-                <p className="text-sm text-[var(--ink-muted)]">No invoices for this client yet.</p>
+                <p className="text-sm text-[var(--ink-muted)]">{t("noInvoices")}</p>
                 <Button variant="soft" size="sm" className="mt-3" onClick={() => nav(`/invoices/new?client=${id}`)}>
-                  <Plus size={14} /> Create one
+                  <Plus size={14} /> {t("createOne")}
                 </Button>
               </div>
             ) : (
@@ -198,7 +200,7 @@ export default function ClientDetail() {
                         {inv.invoice_number}
                       </div>
                       <div className="text-xs text-[var(--ink-muted)]">
-                        Issued {formatDate(inv.issue_date)} · Due {formatDate(inv.due_date)}
+                        {t("issued")} {formatDate(inv.issue_date)} · {t("due")} {formatDate(inv.due_date)}
                       </div>
                     </div>
                     <div className="text-sm font-semibold text-[var(--ink)] tabular shrink-0">
@@ -222,24 +224,41 @@ export default function ClientDetail() {
       {/* Insights row — aligns with the columns above (1 / 2 split) */}
       {invoices.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 items-start">
-          <PaymentStatusCard insights={insights} />
+          <PaymentStatusCard insights={insights} currency={currency} />
           <div className="lg:col-span-2">
-            <BillingChartCard insights={insights} />
+            <BillingChartCard insights={insights} currency={currency} />
           </div>
         </div>
       )}
 
       <ClientFormModal open={editOpen} onClose={() => setEditOpen(false)} client={client} />
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t("deleteTitle")}
+        description={t("deleteBody", { name: client.name })}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        danger
+        onConfirm={async () => {
+          await del.mutateAsync(client.id);
+          nav("/clients");
+        }}
+      />
     </div>
   );
 }
 
-function PaymentStatusCard({ insights }) {
+function PaymentStatusCard({ insights, currency }) {
+  const { t } = useTranslation("clients");
+  const { t: tc } = useTranslation("common");
   const { breakdown, avgInvoice, largest, paidRate } = insights;
   const hasData = breakdown.length > 0;
+  const labelFor = (name: string) =>
+    name === "Paid" ? tc("status.paid") : name === "Overdue" ? tc("status.overdue") : t("open");
   return (
     <Card padding="lg">
-      <CardTitle className="mb-4">Payment status</CardTitle>
+      <CardTitle className="mb-4">{t("paymentStatus")}</CardTitle>
       {hasData ? (
         <div className="flex items-center gap-4">
           <div className="relative h-[120px] w-[120px] shrink-0">
@@ -266,32 +285,32 @@ function PaymentStatusCard({ insights }) {
                     fontSize: 12,
                     color: "var(--ink)",
                   }}
-                  formatter={(v, n) => [formatMoney(v), n]}
+                  formatter={(v, n) => [formatMoney(v, currency), labelFor(String(n))]}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-lg font-display font-semibold tabular text-[var(--ink)]">{paidRate}%</span>
-              <span className="text-[10px] text-[var(--ink-muted)]">paid</span>
+              <span className="text-[10px] text-[var(--ink-muted)]">{t("paidRate")}</span>
             </div>
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             {breakdown.map((s) => (
               <div key={s.name} className="flex items-center gap-2 text-sm">
                 <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: s.color }} />
-                <span className="text-[var(--ink-muted)] flex-1">{s.name}</span>
-                <span className="tabular font-medium text-[var(--ink)]">{formatMoney(s.value)}</span>
+                <span className="text-[var(--ink-muted)] flex-1">{labelFor(s.name)}</span>
+                <span className="tabular font-medium text-[var(--ink)]">{formatMoney(s.value, currency)}</span>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="py-6 text-center text-sm text-[var(--ink-muted)]">Nothing billed yet.</div>
+        <div className="py-6 text-center text-sm text-[var(--ink-muted)]">{t("nothingBilled")}</div>
       )}
 
       <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-[var(--border)]">
-        <Metric icon={Receipt} label="Avg invoice" value={formatMoney(avgInvoice)} />
-        <Metric icon={TrendingUp} label="Largest" value={formatMoney(largest)} />
+        <Metric icon={Receipt} label={t("avgInvoice")} value={formatMoney(avgInvoice, currency)} />
+        <Metric icon={TrendingUp} label={t("largest")} value={formatMoney(largest, currency)} />
       </div>
     </Card>
   );
@@ -311,11 +330,12 @@ function Metric({ icon: Icon, label, value }) {
   );
 }
 
-function BillingChartCard({ insights }) {
+function BillingChartCard({ insights, currency }) {
+  const { t } = useTranslation("clients");
   const { monthly, hasMonthly } = insights;
   return (
     <Card padding="lg" className="h-full">
-      <CardTitle className="mb-4">Billing over time</CardTitle>
+      <CardTitle className="mb-4">{t("billingOverTime")}</CardTitle>
       {hasMonthly ? (
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={monthly} margin={{ top: 6, right: 4, bottom: 0, left: -12 }}>
@@ -342,14 +362,14 @@ function BillingChartCard({ insights }) {
                 fontSize: 12,
                 color: "var(--ink)",
               }}
-              formatter={(v) => [formatMoney(v), "Billed"]}
+              formatter={(v) => [formatMoney(v, currency), t("billed")]}
             />
             <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40} fill="url(#clientBillGrad)" isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-sm text-[var(--ink-muted)]">
-          No billing activity in the last 6 months.
+          {t("noBillingActivity")}
         </div>
       )}
     </Card>

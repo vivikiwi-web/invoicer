@@ -1,29 +1,11 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import {
-  LayoutGrid,
-  FileText,
-  Users,
-  Receipt,
-  Wallet,
-  Package,
-  BarChart3,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import AILogo from "./AILogo";
-
-const NAV = [
-  { to: "/dashboard", icon: LayoutGrid, label: "Dashboard" },
-  { to: "/invoices", icon: FileText, label: "Invoices" },
-  { to: "/clients", icon: Users, label: "Clients" },
-  { to: "/expenses", icon: Receipt, label: "Expenses" },
-  { to: "/payments", icon: Wallet, label: "Payments" },
-  { to: "/items", icon: Package, label: "Items" },
-  { to: "/reports", icon: BarChart3, label: "Reports" },
-];
+import { NAV, SETTINGS_NAV } from "./nav";
 
 const ROW_BASE =
   "relative flex items-center h-11 w-11 rounded-2xl overflow-hidden " +
@@ -109,13 +91,14 @@ function ActionRow({
 }
 
 export function Sidebar() {
+  const { t } = useTranslation("nav");
   const { user, logout } = useAuth();
   const displayName = user?.name || "Account";
   const displayEmail = user?.email || "";
 
   return (
     <aside
-      aria-label="Main navigation"
+      aria-label={t("main")}
       className={cn(
         "group/sidebar hidden md:flex shrink-0 h-[calc(100vh-32px)] sticky top-4 ml-4",
         "flex-col items-center justify-between py-5 rounded-3xl",
@@ -135,6 +118,7 @@ export function Sidebar() {
             <AILogo />
           </div>
           <span
+            translate="no"
             className={cn(
               "ml-2 font-display text-base font-semibold text-[var(--ink)] whitespace-nowrap",
               "opacity-0 -translate-x-1",
@@ -148,14 +132,14 @@ export function Sidebar() {
 
         <nav className="flex flex-col items-center gap-1.5">
           {NAV.map((item) => (
-            <NavItem key={item.to} {...item} />
+            <NavItem key={item.to} to={item.to} icon={item.icon} label={t(item.labelKey)} />
           ))}
         </nav>
       </div>
 
       <div className="flex flex-col items-center gap-2 w-full">
-        <ActionRow icon={Settings} label="Settings" to="/settings" />
-        <ActionRow icon={LogOut} label="Log out" onClick={logout} />
+        <ActionRow icon={SETTINGS_NAV.icon} label={t(SETTINGS_NAV.labelKey)} to={SETTINGS_NAV.to} />
+        <ActionRow icon={LogOut} label={t("logOut")} onClick={logout} />
 
         <div
           className={cn(

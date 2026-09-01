@@ -4,7 +4,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { FormSkeleton } from "@/components/ui/Skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
+import type { DocumentLanguage } from "@shared/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -12,6 +16,7 @@ import { useToast } from "@/context/UIContext";
 import { authApi } from "@/api/auth";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { CURRENCIES, cn, errorMessage } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 
 function FieldLabel({ children }) {
   return (
@@ -22,6 +27,8 @@ function FieldLabel({ children }) {
 }
 
 function CompanySection() {
+  const { t } = useTranslation("settings");
+  const { t: tc } = useTranslation("common");
   const { data: settings } = useSettings();
   const update = useUpdateSettings();
   const toast = useToast();
@@ -35,6 +42,7 @@ function CompanySection() {
     currency: string;
     tax_rate: number;
     invoice_prefix: string;
+    default_document_language: DocumentLanguage;
   } | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -46,15 +54,16 @@ function CompanySection() {
         phone: settings.phone || "",
         address: settings.address || "",
         logo_url: settings.logo_url || "",
-        currency: settings.currency || "USD",
+        currency: settings.currency || "EUR",
         tax_rate: Number(settings.tax_rate) || 0,
         invoice_prefix: settings.invoice_prefix || "INV-",
+        default_document_language: settings.default_document_language === "en" ? "en" : "lt",
       });
     }
   }, [settings, form]);
 
   if (!form) {
-    return <PageSpinner className="py-16" />;
+    return <FormSkeleton />;
   }
 
   const set = (k: string) => (e: { target: { value: string } }) =>
@@ -82,25 +91,23 @@ function CompanySection() {
     setSaving(true);
     try {
       await update.mutateAsync({ ...form, tax_rate: Number(form.tax_rate) || 0 });
-      toast.success("Company settings saved");
+      toast.success(t("saved"), t("savedBody"));
+      if (form.company_name) analytics.track("company_profile_completed");
     } catch (err) {
-      toast.error("Couldn't save settings", errorMessage(err));
+      toast.error(t("saveFailed"), errorMessage(err));
     } finally {
       setSaving(false);
     }
   }
-
-  const selectClass =
-    "h-10 w-full rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/15";
 
   return (
     <form onSubmit={onSave} className="space-y-5 max-w-2xl">
       <Card padding="lg">
         <CardHeader>
           <div>
-            <CardTitle className="text-base">Company profile</CardTitle>
+            <CardTitle className="text-base">{t("companyProfile")}</CardTitle>
             <CardDescription className="mt-1">
-              This appears on every invoice and PDF you send.
+              {t("companyProfileHint")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -116,7 +123,7 @@ function CompanySection() {
           <div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onLogoPick} />
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-              <Upload size={14} /> Upload logo
+              <Upload size={14} /> {t("uploadLogo")}
             </Button>
             {form.logo_url && (
               <button
@@ -124,30 +131,30 @@ function CompanySection() {
                 onClick={() => setForm((f) => (f ? { ...f, logo_url: "" } : f))}
                 className="ml-2 text-xs text-[var(--danger)] font-semibold"
               >
-                Remove
+                {t("remove")}
               </button>
             )}
-            <p className="text-[11px] text-[var(--ink-muted)] mt-1.5">PNG or SVG, under 400KB.</p>
+            <p className="text-[11px] text-[var(--ink-muted)] mt-1.5">{t("logoHint")}</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <FieldLabel>Company name</FieldLabel>
+            <FieldLabel>{t("companyName")}</FieldLabel>
             <Input value={form.company_name} onChange={set("company_name")} placeholder="Your Company LLC" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <FieldLabel>Billing email</FieldLabel>
+              <FieldLabel>{t("billingEmail")}</FieldLabel>
               <Input type="email" value={form.email} onChange={set("email")} placeholder="billing@you.com" />
             </div>
             <div>
-              <FieldLabel>Phone</FieldLabel>
+              <FieldLabel>{t("phone")}</FieldLabel>
               <Input value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" />
             </div>
           </div>
           <div>
-            <FieldLabel>Address</FieldLabel>
+            <FieldLabel>{t("address")}</FieldLabel>
             <Input value={form.address} onChange={set("address")} placeholder="123 Main St, City, State" />
           </div>
         </div>
@@ -156,30 +163,54 @@ function CompanySection() {
       <Card padding="lg">
         <CardHeader>
           <div>
-            <CardTitle className="text-base">Invoicing defaults</CardTitle>
+            <CardTitle className="text-base">{t("invoicingDefaults")}</CardTitle>
             <CardDescription className="mt-1">
-              Applied automatically to each new invoice.
+              {t("invoicingDefaultsHint")}
             </CardDescription>
           </div>
         </CardHeader>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <FieldLabel>Default currency</FieldLabel>
-            <select className={selectClass} value={form.currency} onChange={set("currency")}>
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code}
-                </option>
-              ))}
-            </select>
+            <FieldLabel>{t("defaultCurrency")}</FieldLabel>
+            <Select value={form.currency} onValueChange={(v) => setForm((f) => (f ? { ...f, currency: v } : f))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <FieldLabel>Default tax %</FieldLabel>
+            <FieldLabel>{t("taxRate")}</FieldLabel>
             <Input type="number" min="0" step="0.1" value={form.tax_rate} onChange={set("tax_rate")} className="tabular" />
           </div>
           <div>
-            <FieldLabel>Invoice # prefix</FieldLabel>
+            <FieldLabel>{t("invoicePrefix")}</FieldLabel>
             <Input value={form.invoice_prefix} onChange={set("invoice_prefix")} placeholder="INV-" />
+          </div>
+          <div className="sm:col-span-3">
+            <FieldLabel>{t("defaultDocumentLanguage")}</FieldLabel>
+            <Select
+              value={form.default_document_language}
+              onValueChange={(v) =>
+                setForm((f) =>
+                  f ? { ...f, default_document_language: v === "en" ? "en" : "lt" } : f,
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lt">{tc("documentLanguage.lt")}</SelectItem>
+                <SelectItem value="en">{tc("documentLanguage.en")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </Card>
@@ -187,7 +218,7 @@ function CompanySection() {
       <div className="flex justify-end">
         <Button type="submit" variant="accent" disabled={saving}>
           {saving && <Loader2 size={14} className="animate-spin" />}
-          Save company settings
+          {tc("save")}
         </Button>
       </div>
     </form>
@@ -195,6 +226,8 @@ function CompanySection() {
 }
 
 function ProfileSection() {
+  const { t } = useTranslation("settings");
+  const { t: tc } = useTranslation("common");
   const { user, updateProfile } = useAuth();
   const toast = useToast();
   const [name, setName] = useState(user?.name || "");
@@ -208,9 +241,9 @@ function ProfileSection() {
     setSaving(true);
     try {
       await updateProfile({ name: name.trim() });
-      toast.success("Profile updated");
+      toast.success(t("saved"));
     } catch (err) {
-      toast.error("Couldn't update profile", errorMessage(err));
+      toast.error(t("saveFailed"), errorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -220,9 +253,9 @@ function ProfileSection() {
     <Card padding="lg" className="max-w-2xl">
       <CardHeader>
         <div>
-          <CardTitle className="text-base">Your account</CardTitle>
+          <CardTitle className="text-base">{t("yourAccount")}</CardTitle>
           <CardDescription className="mt-1">
-            Your name appears on the dashboard greeting.
+            {t("yourAccountHint")}
           </CardDescription>
         </div>
       </CardHeader>
@@ -232,23 +265,29 @@ function ProfileSection() {
           <div className="h-14 w-14 rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)] font-semibold flex items-center justify-center text-lg ring-2 ring-[var(--surface)] shrink-0">
             {(user?.name?.[0] || "?").toUpperCase()}
           </div>
-          <div className="text-xs text-[var(--ink-muted)]">Avatar is generated from your initial.</div>
+          <div className="text-xs text-[var(--ink-muted)]">{t("avatarHint")}</div>
         </div>
 
         <div>
-          <FieldLabel>Full name</FieldLabel>
+          <FieldLabel>{t("name")}</FieldLabel>
           <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Your name" />
         </div>
 
         <div>
-          <FieldLabel>Email</FieldLabel>
+          <FieldLabel>{tc("uiLanguage.label")}</FieldLabel>
+          <LanguageSwitcher />
+          <p className="text-[11px] text-[var(--ink-muted)] mt-1.5">{t("languageHint")}</p>
+        </div>
+
+        <div>
+          <FieldLabel>{t("email")}</FieldLabel>
           <Input value={user?.email || ""} disabled />
-          <p className="text-[11px] text-[var(--ink-muted)] mt-1.5">Email changes aren&apos;t supported yet.</p>
+          <p className="text-[11px] text-[var(--ink-muted)] mt-1.5">{t("emailLocked")}</p>
         </div>
 
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={!dirty || saving}>
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? tc("saving") : t("saveChanges")}
           </Button>
         </div>
       </form>
@@ -257,6 +296,7 @@ function ProfileSection() {
 }
 
 function ThemeOption({ value, label, icon: Icon, current, onSelect }) {
+  const { t } = useTranslation("settings");
   const active = current === value;
   return (
     <button
@@ -280,7 +320,7 @@ function ThemeOption({ value, label, icon: Icon, current, onSelect }) {
       <div>
         <div className="text-sm font-semibold text-[var(--ink)]">{label}</div>
         <div className="text-[11px] text-[var(--ink-muted)] mt-0.5">
-          {value === "light" ? "Fresh, bright teal tones" : "Calm, low-glare night"}
+          {value === "light" ? t("themeLightHint") : t("themeDarkHint")}
         </div>
       </div>
       {active && (
@@ -293,27 +333,30 @@ function ThemeOption({ value, label, icon: Icon, current, onSelect }) {
 }
 
 function AppearanceSection() {
+  const { t } = useTranslation("settings");
   const { theme, setTheme } = useTheme();
   return (
     <Card padding="lg" className="max-w-2xl">
       <CardHeader>
         <div>
-          <CardTitle className="text-base">Appearance</CardTitle>
+          <CardTitle className="text-base">{t("appearance")}</CardTitle>
           <CardDescription className="mt-1">
-            Pick a theme. Your choice is remembered on this device.
+            {t("languageHint")}
           </CardDescription>
         </div>
       </CardHeader>
 
       <div className="flex gap-3">
-        <ThemeOption value="light" label="Light" icon={Sun} current={theme} onSelect={setTheme} />
-        <ThemeOption value="dark" label="Dark" icon={Moon} current={theme} onSelect={setTheme} />
+        <ThemeOption value="light" label={t("light")} icon={Sun} current={theme} onSelect={setTheme} />
+        <ThemeOption value="dark" label={t("dark")} icon={Moon} current={theme} onSelect={setTheme} />
       </div>
     </Card>
   );
 }
 
 function PasswordSection() {
+  const { t } = useTranslation("settings");
+  const { t: tc } = useTranslation("common");
   const toast = useToast();
   const [currentPassword, setCurrent] = useState("");
   const [newPassword, setNext] = useState("");
@@ -331,12 +374,12 @@ function PasswordSection() {
     setSaving(true);
     try {
       await authApi.changePassword({ currentPassword, newPassword });
-      toast.success("Password changed");
+      toast.success(t("passwordUpdated"));
       setCurrent("");
       setNext("");
       setConfirm("");
     } catch (err) {
-      toast.error("Couldn't change password", errorMessage(err));
+      toast.error(t("saveFailed"), errorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -346,34 +389,34 @@ function PasswordSection() {
     <Card padding="lg" className="max-w-2xl">
       <CardHeader>
         <div>
-          <CardTitle className="text-base">Password</CardTitle>
+          <CardTitle className="text-base">{t("changePassword")}</CardTitle>
           <CardDescription className="mt-1">
-            Use at least 8 characters. Mix letters, numbers, and a symbol for a stronger password.
+            {t("passwordHint")}
           </CardDescription>
         </div>
       </CardHeader>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <FieldLabel>Current password</FieldLabel>
+          <FieldLabel>{t("currentPassword")}</FieldLabel>
           <Input type="password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />
         </div>
 
         <div>
-          <FieldLabel>New password</FieldLabel>
+          <FieldLabel>{t("newPassword")}</FieldLabel>
           <Input type="password" value={newPassword} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" />
-          {newTooShort && <p className="text-[11px] text-[var(--danger)] mt-1.5">Needs to be at least 8 characters.</p>}
+          {newTooShort && <p className="text-[11px] text-[var(--danger)] mt-1.5">{t("passwordHint")}</p>}
         </div>
 
         <div>
-          <FieldLabel>Confirm new password</FieldLabel>
+          <FieldLabel>{t("confirmPassword")}</FieldLabel>
           <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
-          {mismatch && <p className="text-[11px] text-[var(--danger)] mt-1.5">Passwords don&apos;t match.</p>}
+          {mismatch && <p className="text-[11px] text-[var(--danger)] mt-1.5">{t("passwordMismatch")}</p>}
         </div>
 
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={!canSubmit}>
-            {saving ? "Updating..." : "Update password"}
+            {saving ? tc("saving") : t("updatePassword")}
           </Button>
         </div>
       </form>
@@ -382,18 +425,19 @@ function PasswordSection() {
 }
 
 export default function Settings() {
+  const { t } = useTranslation("settings");
   const [tab, setTab] = useState("company");
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Your company profile, invoicing defaults, and account." />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="company">Company</TabsTrigger>
-          <TabsTrigger value="profile">Account</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="password">Password</TabsTrigger>
+          <TabsTrigger value="company">{t("company")}</TabsTrigger>
+          <TabsTrigger value="profile">{t("account")}</TabsTrigger>
+          <TabsTrigger value="appearance">{t("appearance")}</TabsTrigger>
+          <TabsTrigger value="password">{t("changePassword")}</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">

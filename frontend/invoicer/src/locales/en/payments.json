@@ -1,0 +1,31 @@
+{
+  "title": "Payments",
+  "description": "Payments recorded against invoices.",
+  "add": "Record payment",
+  "invoice": "Invoice",
+  "amount": "Amount",
+  "method": "Method",
+  "date": "Date",
+  "notes": "Notes",
+  "empty": "No payments yet",
+  "received": "Received",
+  "thisMonth": "This month",
+  "deleteTitle": "Delete payment?",
+  "deleteBody": "This payment record will be removed.",
+  "selectInvoice": "Select an invoice",
+  "methods": {
+    "bank": "Bank transfer",
+    "card": "Card",
+    "check": "Check",
+    "cash": "Cash",
+    "paypal": "PayPal",
+    "other": "Other",
+    "stripe": "Stripe"
+  },
+  "client": "Client",
+  "invoiceClient": "Invoice / Client",
+  "amountRequired": "Enter a valid amount",
+  "recordTitle": "Record payment",
+  "notesPlaceholder": "Reference / memo",
+  "saveFailed": "Couldn't record payment"
+}

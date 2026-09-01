@@ -1,0 +1,25 @@
+{
+  "invoice": "SĄSKAITA",
+  "billTo": "Gavėjas",
+  "issued": "Išrašyta",
+  "due": "Terminas",
+  "balance": "Likutis",
+  "description": "Aprašymas",
+  "qty": "Kiekis",
+  "rate": "Kaina",
+  "amount": "Suma",
+  "subtotal": "Tarpinė suma",
+  "discount": "Nuolaida",
+  "tax": "PVM ({{rate}}%)",
+  "total": "Iš viso",
+  "notes": "Pastabos",
+  "terms": "Sąlygos",
+  "thanks": "Ačiū, kad dirbate su mumis",
+  "yourCompany": "Jūsų įmonė",
+  "status": {
+    "draft": "JUODRAŠTIS",
+    "sent": "IŠSIŲSTA",
+    "paid": "APMOKĖTA",
+    "overdue": "VĖLUOJA"
+  }
+}

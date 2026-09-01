@@ -1,0 +1,20 @@
+{
+  "banner": {
+    "title": "Cookies",
+    "body": "We use necessary cookies to run the site, and optional analytics cookies (PostHog) if you agree.",
+    "acceptAll": "Accept all",
+    "reject": "Reject non-essential",
+    "customize": "Customize"
+  },
+  "prefs": {
+    "title": "Cookie settings",
+    "description": "Necessary cookies are always on. Analytics run only with your consent.",
+    "necessary": "Necessary",
+    "necessaryHelp": "Sign-in, theme, language, and this consent record.",
+    "analytics": "Analytics",
+    "analyticsHelp": "PostHog usage stats without invoice contents. Session replay is off.",
+    "save": "Save",
+    "alwaysOn": "Always on"
+  },
+  "footerLink": "Cookie settings"
+}

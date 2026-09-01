@@ -27,5 +27,6 @@ export const aiApi = {
 		prompt?: string;
 		items?: Array<{ description?: string; quantity?: number; rate?: number }>;
 		client?: { name?: string };
+		document_language?: "lt" | "en";
 	}) => apiClient.post<{ text: string }>("/ai/write-note", payload).then((r) => r.data.text),
 };

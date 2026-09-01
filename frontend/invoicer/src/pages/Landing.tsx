@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -18,14 +18,27 @@ import {
   CheckCircle2,
   TrendingUp,
   Check,
+  Menu,
+  X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import AILogo from "@/components/layout/AILogo";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { PricingSection, FaqSection } from "@/components/marketing/PricingFaq";
+import { SiteFooter } from "@/pages/LegalPage";
+import { useLocale } from "@/context/LocaleContext";
+import { PUBLIC_PATHS } from "@/i18n/publicRoutes";
+import { analytics } from "@/lib/analytics";
 
 const TEAL = "#0d9488";
 const TEAL_DARK = "#0f766e";
 
 export default function Landing() {
+  const { t } = useTranslation("marketing");
+  const { locale } = useLocale();
+
   useEffect(() => {
     const prev = document.documentElement.getAttribute("data-theme");
     document.documentElement.setAttribute("data-theme", "light");
@@ -36,45 +49,94 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white text-[#0c1a17] overflow-x-clip antialiased">
+      <DocumentMeta
+        title={t("meta.homeTitle")}
+        description={t("meta.homeDescription")}
+        locale={locale}
+        page="home"
+      />
+      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-white px-3 py-2 rounded-full text-sm font-semibold">
+        {t("skipToContent", { ns: "common" })}
+      </a>
       <Nav />
-      <Hero />
-      <Marquee />
-      <AISection />
-      <CoreSection />
-      <CTASection />
-      <Footer />
+      <main id="content">
+        <Hero />
+        <Marquee />
+        <AISection />
+        <CoreSection />
+        <PricingSection id={locale === "en" ? "pricing" : "kainos"} />
+        <FaqSection id={locale === "en" ? "faq" : "duk"} />
+        <CTASection />
+      </main>
+      <SiteFooter />
     </div>
   );
 }
 
 /* ─────────────────────────── Nav ─────────────────────────── */
 function Nav() {
+  const { t } = useTranslation("marketing");
+  const { locale } = useLocale();
+  const [open, setOpen] = useState(false);
+  const home = PUBLIC_PATHS.home[locale];
+  const pricing = PUBLIC_PATHS.pricing[locale];
+  const featuresHref = "#features";
+  const aiHref = "#ai";
+  const faqHref = locale === "en" ? "#faq" : "#duk";
+
   return (
     <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/70 border-b border-black/[0.05]">
       <div className="max-w-[1400px] mx-auto px-5 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+        <Link to={home} className="flex items-center gap-2.5">
           <AILogo />
-          <span className="font-display font-semibold text-lg">Invoicer</span>
-        </div>
+          <span className="font-display font-semibold text-lg" translate="no">Invoicer</span>
+        </Link>
+        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#4a5f5a]">
+          <a href={featuresHref}>{t("nav.features")}</a>
+          <a href={aiHref}>{t("nav.ai")}</a>
+          <Link to={pricing}>{t("nav.pricing")}</Link>
+          <a href={faqHref}>{t("nav.faq")}</a>
+        </nav>
         <div className="flex items-center gap-2">
-          <Link to="/login" className="h-10 px-4 rounded-full text-sm font-semibold hover:bg-black/[0.04] flex items-center transition-colors">
-            Sign in
+          <LanguageSwitcher size="sm" className="hidden sm:inline-flex" />
+          <Link to="/login" className="hidden sm:flex h-10 px-4 rounded-full text-sm font-semibold hover:bg-black/[0.04] items-center transition-colors">
+            {t("nav.signIn")}
           </Link>
           <Link
             to="/register"
-            className="group h-10 px-5 rounded-full text-sm font-semibold text-white flex items-center gap-1.5 shadow-[0_8px_24px_-8px_rgba(13,148,136,0.6)] hover:shadow-[0_12px_30px_-8px_rgba(13,148,136,0.75)] transition-all"
+            onClick={() => analytics.track("landing_cta_clicked", { placement: "nav" })}
+            className="group h-10 px-5 rounded-full text-sm font-semibold text-white flex items-center gap-1.5 shadow-[0_8px_24px_-8px_rgba(13,148,136,0.6)]"
             style={{ background: "linear-gradient(135deg,#14b8a6,#0d9488 50%,#0f766e)" }}
           >
-            Get started <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            {t("nav.getStarted")} <ArrowRight size={15} />
           </Link>
+          <button type="button" className="md:hidden h-10 w-10 rounded-full flex items-center justify-center" onClick={() => setOpen((v) => !v)} aria-label={t("nav.menu")}>
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
+      {open && (
+        <div className="md:hidden border-t border-black/[0.05] px-5 py-4 flex flex-col gap-3 text-sm font-semibold">
+          <a href={featuresHref} onClick={() => setOpen(false)}>{t("nav.features")}</a>
+          <a href={aiHref} onClick={() => setOpen(false)}>{t("nav.ai")}</a>
+          <Link to={pricing} onClick={() => setOpen(false)}>{t("nav.pricing")}</Link>
+          <a href={faqHref} onClick={() => setOpen(false)}>{t("nav.faq")}</a>
+          <LanguageSwitcher size="sm" />
+        </div>
+      )}
     </header>
   );
 }
 
 /* ─────────────────────────── Hero ─────────────────────────── */
 function Hero() {
+  const { t } = useTranslation("marketing");
+  const bullets = [
+    t("features.invoices.title"),
+    t("features.clients.title"),
+    t("features.payments.title"),
+    t("features.expenses.title"),
+  ];
   return (
     <section className="relative overflow-hidden">
       {/* ambient glows */}
@@ -91,31 +153,28 @@ function Hero() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-black/[0.05] text-[#0f766e] text-xs font-semibold shadow-sm">
-            <Sparkles size={13} /> AI-powered invoicing
+            <Sparkles size={13} /> {t("hero.badge")}
           </span>
           <h1 className="font-display text-[clamp(40px,6.4vw,68px)] font-semibold leading-[0.98] tracking-tight mt-6">
-            Invoicing that
-            <br />
-            <span style={{ background: "linear-gradient(120deg,#0f766e,#14b8a6 55%,#2dd4bf)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-              runs itself.
-            </span>
+            {t("hero.title")}
           </h1>
           <p className="text-lg text-[#4a5f5a] mt-6 max-w-lg leading-relaxed">
-            Create beautiful invoices, track payments, and let AI read receipts, draft reminders,
-            and summarize your revenue — so you get back to the work that pays.
+            {t("hero.subtitle")}
           </p>
           <div className="flex items-center gap-3 mt-8">
             <Link to="/register"
-              className="group h-12 px-7 rounded-full text-sm font-semibold text-white flex items-center gap-2 shadow-[0_12px_30px_-8px_rgba(13,148,136,0.65)] hover:shadow-[0_16px_38px_-8px_rgba(13,148,136,0.8)] transition-all"
+              onClick={() => analytics.track("landing_cta_clicked", { placement: "hero" })}
+              className="group h-12 px-7 rounded-full text-sm font-semibold text-white flex items-center gap-2 shadow-[0_12px_30px_-8px_rgba(13,148,136,0.65)]"
               style={{ background: "linear-gradient(135deg,#14b8a6,#0d9488 50%,#0f766e)" }}>
-              Start free <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              {t("hero.cta")} <ArrowRight size={16} />
             </Link>
             <Link to="/login" className="h-12 px-6 rounded-full text-sm font-semibold border border-black/10 bg-white hover:bg-black/[0.03] flex items-center transition-colors">
-              Sign in
+              {t("nav.signIn")}
             </Link>
           </div>
+          <p className="text-xs text-[#5c7570] mt-3">{t("hero.note")}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-8">
-            {["Client CRM", "PDF export", "Payments & expenses", "Multi-currency"].map((f) => (
+            {bullets.map((f) => (
               <span key={f} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#4a5f5a]">
                 <Check size={14} className="text-[#0d9488]" /> {f}
               </span>
@@ -124,7 +183,7 @@ function Hero() {
         </motion.div>
 
         {/* Right — scrolling invoice wall */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block" aria-hidden="true">
           <InvoiceWall />
         </div>
       </div>
@@ -166,6 +225,7 @@ function ScrollColumn({
   duration: number;
   className?: string;
 }) {
+  const reduce = useReducedMotion();
   const doubled = [...cards, ...cards];
   const from = direction === "up" ? "0%" : "-50%";
   const to = direction === "up" ? "-50%" : "0%";
@@ -173,7 +233,7 @@ function ScrollColumn({
     <div className={cn("w-[228px] shrink-0", className)}>
       <motion.div
         className="flex flex-col gap-3.5"
-        animate={{ y: [from, to] }}
+        animate={reduce ? undefined : { y: [from, to] }}
         transition={{ duration, repeat: Infinity, ease: "linear" }}
       >
         {doubled.map((c, i) => (
@@ -213,12 +273,12 @@ function InvoiceCard() {
         <div><Label>Invoice</Label><div className="text-[15px] font-bold text-gray-900 mt-1 tabular-nums">INV-0042</div></div>
         <Pill>Sent</Pill>
       </div>
-      {[["Design sprint", "$3,200"], ["Development · 24h", "$2,280"]].map(([d, a]) => (
+      {[["Design sprint", "€3,200"], ["Development · 24h", "€2,280"]].map(([d, a]) => (
         <div key={d} className="flex items-center justify-between text-[12px] py-0.5"><span className="text-gray-500">{d}</span><span className="text-gray-900 font-semibold tabular-nums">{a}</span></div>
       ))}
       <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
         <span className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Total</span>
-        <span className="text-[17px] font-bold tabular-nums" style={{ color: TEAL_DARK }}>$5,480</span>
+        <span className="text-[17px] font-bold tabular-nums" style={{ color: TEAL_DARK }}>€5,480</span>
       </div>
       <CardFoot>Nova Retail Group</CardFoot>
     </WallCard>
@@ -229,7 +289,7 @@ function RevenueCard() {
   return (
     <WallCard>
       <div className="flex items-start justify-between mb-3">
-        <div><Label>Total Revenue</Label><div className="text-[26px] font-bold text-gray-900 mt-1 tabular-nums">$311K</div></div>
+        <div><Label>Total Revenue</Label><div className="text-[26px] font-bold text-gray-900 mt-1 tabular-nums">€311K</div></div>
         <Pill><TrendingUp size={10} strokeWidth={2.5} /> +12%</Pill>
       </div>
       <div className="flex items-end gap-1.5 h-12">
@@ -249,7 +309,7 @@ function ReceiptCard() {
       <div className="rounded-xl p-3" style={{ background: "#d3f4ec" }}>
         <div className="text-[9px] uppercase tracking-wide font-semibold mb-1" style={{ color: TEAL_DARK }}>Extracted</div>
         <div className="text-[13px] font-semibold text-gray-900">Adobe Inc.</div>
-        <div className="flex items-center justify-between text-[12px] text-gray-600 mt-1"><span>Creative Cloud ×1</span><span className="tabular-nums font-bold text-gray-900">$54.99</span></div>
+        <div className="flex items-center justify-between text-[12px] text-gray-600 mt-1"><span>Creative Cloud ×1</span><span className="tabular-nums font-bold text-gray-900">€54.99</span></div>
       </div>
       <CardFoot>Image → invoice</CardFoot>
     </WallCard>
@@ -261,7 +321,7 @@ function PaymentCard() {
     <WallCard>
       <div className="flex items-center gap-2.5">
         <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#dcfce7" }}><CheckCircle2 size={17} className="text-emerald-600" /></div>
-        <div><Label>Payment received</Label><div className="text-[17px] font-bold text-gray-900 tabular-nums">$7,595.00</div></div>
+        <div><Label>Payment received</Label><div className="text-[17px] font-bold text-gray-900 tabular-nums">€7,595.00</div></div>
       </div>
       <div className="flex items-center justify-between text-[11px] text-gray-500 mt-3"><span>INV-0038 · Harbor & Co.</span><span>Bank transfer</span></div>
     </WallCard>
@@ -274,7 +334,7 @@ function ReminderCard() {
       <div className="flex items-start justify-between mb-2.5"><Label>AI Reminder</Label><Pill><Sparkles size={10} strokeWidth={2.5} /> Drafted</Pill></div>
       <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
         <div className="flex items-center gap-1.5 mb-1"><BellRing size={12} style={{ color: TEAL_DARK }} /><span className="text-[12px] font-semibold text-gray-900">Friendly nudge</span></div>
-        <p className="text-[11.5px] text-gray-500 leading-snug">"Hi Nova — a gentle reminder that INV-0021 for $2,400 was due last week…"</p>
+        <p className="text-[11.5px] text-gray-500 leading-snug">"Hi Nova — a gentle reminder that INV-0021 for €2,400 was due last week…"</p>
       </div>
       <CardFoot>One click to send</CardFoot>
     </WallCard>
@@ -285,7 +345,7 @@ function PaidCard() {
   return (
     <WallCard>
       <div className="flex items-start justify-between mb-3"><Label>Paid this month</Label><Pill><Check size={10} strokeWidth={3} /> On track</Pill></div>
-      <div className="text-[28px] font-bold text-gray-900 tabular-nums">$42,180</div>
+      <div className="text-[28px] font-bold text-gray-900 tabular-nums">€42,180</div>
       <div className="flex items-center gap-1 mt-2.5">
         {Array.from({ length: 8 }).map((_, i) => <span key={i} className="h-2 flex-1 rounded-full" style={{ background: i < 6 ? TEAL : "#e5e7eb" }} />)}
       </div>
@@ -302,8 +362,8 @@ function ClientCard() {
         <div><div className="text-[13px] font-semibold text-gray-900">Brightline Studios</div><div className="text-[11px] text-gray-400">New York, NY</div></div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <div><div className="text-[9px] uppercase tracking-wide text-gray-400 font-semibold">Billed</div><div className="text-[13px] font-bold text-gray-900 tabular-nums">$18.4K</div></div>
-        <div><div className="text-[9px] uppercase tracking-wide text-gray-400 font-semibold">Owed</div><div className="text-[13px] font-bold tabular-nums" style={{ color: "#b45309" }}>$3.8K</div></div>
+        <div><div className="text-[9px] uppercase tracking-wide text-gray-400 font-semibold">Billed</div><div className="text-[13px] font-bold text-gray-900 tabular-nums">€18.4K</div></div>
+        <div><div className="text-[9px] uppercase tracking-wide text-gray-400 font-semibold">Owed</div><div className="text-[13px] font-bold tabular-nums" style={{ color: "#b45309" }}>€3.8K</div></div>
       </div>
     </WallCard>
   );
@@ -314,7 +374,7 @@ function StatCard2() {
     <WallCard>
       <div className="flex items-center gap-2.5">
         <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#d3f4ec" }}><Wallet size={16} style={{ color: TEAL_DARK }} /></div>
-        <div><Label>Outstanding</Label><div className="text-[17px] font-bold text-gray-900 tabular-nums">$23,760</div></div>
+        <div><Label>Outstanding</Label><div className="text-[17px] font-bold text-gray-900 tabular-nums">€23,760</div></div>
       </div>
       <div className="flex items-center justify-between text-[11px] mt-3"><span className="text-gray-500">12 open invoices</span><Pill tone="rose">3 overdue</Pill></div>
     </WallCard>
@@ -328,18 +388,20 @@ function ExpenseCard() {
         <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#fbf1e2" }}><Receipt size={16} style={{ color: "#b45309" }} /></div>
         <div><Label>Expense</Label><div className="text-[14px] font-bold text-gray-900">AWS · Hosting</div></div>
       </div>
-      <div className="flex items-center justify-between text-[12px] mt-3"><span className="text-gray-500">Jul 2026 · card ****3140</span><span className="tabular-nums font-bold text-gray-900">$128.40</span></div>
+      <div className="flex items-center justify-between text-[12px] mt-3"><span className="text-gray-500">Jul 2026 · card ****3140</span><span className="tabular-nums font-bold text-gray-900">€128.40</span></div>
     </WallCard>
   );
 }
 
 /* ───────────────── Marquee strip ───────────────── */
 function Marquee() {
-  const items = ["Neon Postgres", "Google Gemini AI", "PDF invoices", "Receipt scanning", "Payment tracking", "Expense management", "Revenue analytics", "Multi-currency"];
+  const { t } = useTranslation("marketing");
+  const items = t("marquee", { returnObjects: true }) as string[];
   const doubled = [...items, ...items];
+  const reduce = useReducedMotion();
   return (
     <div className="border-y border-black/[0.05] bg-[#f5faf9] py-4 overflow-hidden">
-      <motion.div className="flex gap-3 w-max" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 28, repeat: Infinity, ease: "linear" }}>
+      <motion.div className="flex gap-3 w-max" animate={reduce ? undefined : { x: ["0%", "-50%"] }} transition={{ duration: 28, repeat: Infinity, ease: "linear" }}>
         {doubled.map((t, i) => (
           <span key={i} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/[0.05] text-sm font-medium text-[#4a5f5a] shadow-sm whitespace-nowrap">
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: TEAL }} /> {t}
@@ -351,19 +413,19 @@ function Marquee() {
 }
 
 /* ───────────────── AI section ───────────────── */
-const AI_FEATURES = [
-  { icon: ScanLine, title: "Receipt scanning", desc: "Snap a photo or drop a PDF — AI extracts the vendor, date, and line items and pre-fills your invoice or expense." },
-  { icon: Sparkles, title: "Revenue summaries", desc: "A plain-English read on your month: what's up, what's overdue, and exactly who to follow up with." },
-  { icon: BellRing, title: "Payment reminders", desc: "Generate friendly, firm, or final-notice reminder emails tuned to how overdue an invoice is." },
-  { icon: PenLine, title: "Notes writer", desc: "Draft polished service descriptions and payment terms in a single click." },
-];
-
 function AISection() {
+  const { t } = useTranslation("marketing");
+  const features = [
+    { icon: ScanLine, title: t("ai.receiptsTitle"), desc: t("ai.receipts") },
+    { icon: Sparkles, title: t("ai.summaryTitle"), desc: t("ai.summary") },
+    { icon: BellRing, title: t("ai.remindersTitle"), desc: t("ai.reminders") },
+    { icon: PenLine, title: t("features.catalog.title"), desc: t("features.catalog.body") },
+  ];
   return (
-    <section className="max-w-[1400px] mx-auto px-5 py-24">
-      <SectionHead eyebrow="AI features" title="Four AI superpowers" sub="Powered by Google Gemini, built right into your workflow." />
+    <section id="ai" className="max-w-[1400px] mx-auto px-5 py-24 scroll-mt-20">
+      <SectionHead eyebrow={t("nav.ai")} title={t("ai.title")} sub={t("ai.subtitle")} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-14">
-        {AI_FEATURES.map((f, i) => (
+        {features.map((f, i) => (
           <motion.div key={f.title}
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.08 }}
@@ -383,18 +445,18 @@ function AISection() {
 }
 
 /* ───────────────── Core section ───────────────── */
-const CORE = [
-  { icon: FileText, title: "Smart invoices", desc: "Line-item builder with auto totals, tax, discounts, and one-click PDF export." },
-  { icon: Users, title: "Client CRM", desc: "Every client's billing history, outstanding balance, and payment status in one view." },
-  { icon: Wallet, title: "Payments & expenses", desc: "Log payments against invoices and track business expenses — with a live ledger." },
-  { icon: BarChart3, title: "Revenue analytics", desc: "Revenue vs expenses, AR aging, top clients, and a real-time dashboard." },
-  { icon: Receipt, title: "Reusable catalog", desc: "Save your common services and drop them into any invoice in one tap." },
-  { icon: ShieldCheck, title: "Secure by default", desc: "JWT auth, hashed passwords, and your data isolated per account on Neon." },
-];
-
 function CoreSection() {
+  const { t } = useTranslation("marketing");
+  const CORE = [
+    { icon: FileText, title: t("features.invoices.title"), desc: t("features.invoices.body") },
+    { icon: Users, title: t("features.clients.title"), desc: t("features.clients.body") },
+    { icon: Wallet, title: t("features.payments.title"), desc: t("features.payments.body") },
+    { icon: BarChart3, title: t("features.reports.title"), desc: t("features.reports.body") },
+    { icon: Receipt, title: t("features.catalog.title"), desc: t("features.catalog.body") },
+    { icon: ShieldCheck, title: t("security.title"), desc: t("security.body") },
+  ];
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section id="features" className="relative py-24 overflow-hidden scroll-mt-20">
       <div className="absolute inset-0 bg-[#f5faf9] border-y border-black/[0.05]" />
       <div className="relative max-w-[1400px] mx-auto px-5">
         <SectionHead eyebrow="Everything you need" title="A complete billing workspace" sub="From first invoice to final payment — and every number in between." />
@@ -423,6 +485,7 @@ function CoreSection() {
 
 /* ───────────────── CTA ───────────────── */
 function CTASection() {
+  const { t } = useTranslation("marketing");
   return (
     <section className="max-w-[1400px] mx-auto px-5 py-24">
       <div className="relative rounded-[36px] px-8 py-24 text-center text-white overflow-hidden shadow-[0_40px_80px_-30px_rgba(15,118,110,0.5)]"
@@ -440,17 +503,18 @@ function CTASection() {
 
         <div className="relative z-10">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-semibold backdrop-blur-md">
-            <Sparkles size={13} /> Get paid faster
+            <Sparkles size={13} /> {t("hero.badge")}
           </span>
           <h2 className="font-display text-[clamp(30px,4.5vw,48px)] font-semibold tracking-tight mt-6">
-            Send your first invoice in minutes.
+            {t("cta.title")}
           </h2>
           <p className="text-white/75 mt-4 max-w-md mx-auto text-lg">
-            Free to start. No credit card required.
+            {t("cta.body")}
           </p>
           <Link to="/register"
+            onClick={() => analytics.track("landing_cta_clicked", { placement: "footer" })}
             className="group inline-flex items-center gap-2 mt-9 h-13 px-8 py-4 rounded-full bg-white text-[#0f766e] text-sm font-bold hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.5)] transition-all">
-            Create your account <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            {t("cta.button")} <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
       </div>
@@ -464,9 +528,10 @@ function CtaColumn({ direction, duration }) {
   const from = direction === "up" ? "0%" : "-50%";
   const to = direction === "up" ? "-50%" : "0%";
   const fade = "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)";
+  const reduce = useReducedMotion();
   return (
     <div className="h-full" style={{ maskImage: fade, WebkitMaskImage: fade }}>
-      <motion.div className="flex flex-col gap-3" animate={{ y: [from, to] }} transition={{ duration, repeat: Infinity, ease: "linear" }}>
+      <motion.div className="flex flex-col gap-3" animate={reduce ? undefined : { y: [from, to] }} transition={{ duration, repeat: Infinity, ease: "linear" }}>
         {doubled.map((c, i) => <div key={i}>{c}</div>)}
       </motion.div>
     </div>
@@ -483,7 +548,7 @@ function CtaInv() {
         <span className="text-[12px] font-bold tabular-nums text-white/90">INV-0042</span>
         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20">Paid</span>
       </div>
-      <div className="text-[17px] font-bold tabular-nums mt-1">$5,480</div>
+      <div className="text-[17px] font-bold tabular-nums mt-1">€5,480</div>
     </CtaCard>
   );
 }
@@ -491,7 +556,7 @@ function CtaPay() {
   return (
     <CtaCard>
       <div className="text-[9px] uppercase tracking-wide text-white/60 font-semibold">Payment received</div>
-      <div className="text-[16px] font-bold tabular-nums mt-0.5">$7,595.00</div>
+      <div className="text-[16px] font-bold tabular-nums mt-0.5">€7,595.00</div>
     </CtaCard>
   );
 }
@@ -499,7 +564,7 @@ function CtaReceipt() {
   return (
     <CtaCard>
       <div className="text-[9px] uppercase tracking-wide text-white/60 font-semibold">AI parsed</div>
-      <div className="flex items-center justify-between mt-1"><span className="text-[12px] font-semibold">Adobe Inc.</span><span className="text-[13px] font-bold tabular-nums">$54.99</span></div>
+      <div className="flex items-center justify-between mt-1"><span className="text-[12px] font-semibold">Adobe Inc.</span><span className="text-[13px] font-bold tabular-nums">€54.99</span></div>
     </CtaCard>
   );
 }
@@ -507,27 +572,8 @@ function CtaRevenue() {
   return (
     <CtaCard>
       <div className="text-[9px] uppercase tracking-wide text-white/60 font-semibold">Revenue · +12%</div>
-      <div className="text-[19px] font-bold tabular-nums mt-0.5">$311K</div>
+      <div className="text-[19px] font-bold tabular-nums mt-0.5">€311K</div>
     </CtaCard>
-  );
-}
-
-/* ───────────────── Footer ───────────────── */
-function Footer() {
-  return (
-    <footer className="border-t border-black/[0.05]">
-      <div className="max-w-[1400px] mx-auto px-5 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <AILogo />
-          <span className="font-display font-semibold">Invoicer</span>
-        </div>
-        <span className="text-sm text-[#5a6f6a]">© {new Date().getFullYear()} Invoicer · Built with Neon + Gemini</span>
-        <div className="flex items-center gap-3">
-          <Link to="/login" className="text-sm font-semibold text-[#0f766e] hover:underline">Sign in</Link>
-          <Link to="/register" className="text-sm font-semibold text-[#0f766e] hover:underline">Get started</Link>
-        </div>
-      </div>
-    </footer>
   );
 }
 

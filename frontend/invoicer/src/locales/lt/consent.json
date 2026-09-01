@@ -1,0 +1,20 @@
+{
+  "banner": {
+    "title": "Slapukai",
+    "body": "Naudojame būtinus slapukus, kad svetainė veiktų, ir neprivalomus analitikos slapukus (PostHog), jei sutinkate.",
+    "acceptAll": "Sutikti su visais",
+    "reject": "Atmesti nebūtinus",
+    "customize": "Pasirinkti"
+  },
+  "prefs": {
+    "title": "Slapukų nustatymai",
+    "description": "Būtinieji visada įjungti. Analitika — tik su jūsų sutikimu.",
+    "necessary": "Būtinieji",
+    "necessaryHelp": "Prisijungimas, tema, kalba ir šis sutikimas.",
+    "analytics": "Analitika",
+    "analyticsHelp": "PostHog: naudojimo statistika be sąskaitų turinio. Seansų įrašymas išjungtas.",
+    "save": "Išsaugoti",
+    "alwaysOn": "Visada įjungta"
+  },
+  "footerLink": "Slapukų nustatymai"
+}

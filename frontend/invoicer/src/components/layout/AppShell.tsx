@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { CommandPalette } from "./CommandPalette";
+import { MobileNav } from "./MobileNav";
 
 const PAGE_EASE = [0.23, 1, 0.32, 1] as const;
 
@@ -11,6 +12,7 @@ export function AppShell() {
   const location = useLocation();
   const reduceMotion = useReducedMotion() === true;
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -39,7 +41,7 @@ export function AppShell() {
     <div className="min-h-screen flex bg-[var(--bg)]">
       <Sidebar />
       <main className="flex-1 px-6 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
-        <Topbar onOpenPalette={openPalette} />
+        <Topbar onOpenPalette={openPalette} onOpenNav={() => setNavOpen(true)} />
         <motion.div
           key={location.pathname}
           className={reduceMotion ? undefined : "page-view"}
@@ -51,6 +53,7 @@ export function AppShell() {
         </motion.div>
       </main>
       <CommandPalette open={paletteOpen} onClose={closePalette} />
+      <MobileNav open={navOpen} onOpenChange={setNavOpen} />
     </div>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "generic": "Request failed",
+  "loginFailed": "Login failed",
+  "requestFailed": "Request failed",
+  "notFound": "Not found",
+  "sessionExpired": "Session no longer valid",
+  "map": {
+    "Email already registered": "Email already registered",
+    "Invalid credentials": "Invalid credentials",
+    "Current password is incorrect": "Current password is incorrect",
+    "Invoice not found": "Invoice not found",
+    "Client not found": "Client not found",
+    "Session no longer valid": "Session no longer valid",
+    "Invalid or expired session": "Invalid or expired session",
+    "GEMINI_API_KEY is not configured on the server.": "AI is not configured on the server.",
+    "Couldn't save client": "Couldn't save client",
+    "Couldn't save invoice": "Couldn't save invoice",
+    "Name is required": "Name is required",
+    "No fields to update": "No fields to update"
+  }
+}

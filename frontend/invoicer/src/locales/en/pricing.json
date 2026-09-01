@@ -1,0 +1,42 @@
+{
+  "title": "Pricing",
+  "subtitle": "Start free. Upgrade to Pro when you need more room.",
+  "vatNote": "VAT may apply.",
+  "perMonth": "/ mo",
+  "free": {
+    "name": "Free",
+    "blurb": "For solo freelancers. Core invoicing and clients.",
+    "cta": "Start for free",
+    "features": [
+      "Invoices and PDF",
+      "Clients and balances",
+      "Payments ledger",
+      "Basic expenses and receipt scan",
+      "Limited AI drafts"
+    ]
+  },
+  "pro": {
+    "name": "Pro",
+    "blurb": "Unlimited invoices and clients, full reports, and AI help.",
+    "cta": "Get started",
+    "features": [
+      "Unlimited invoices and clients",
+      "Expenses, payments, catalog",
+      "Reports and dashboard",
+      "Receipt scanning",
+      "AI notes and reminder drafts"
+    ]
+  },
+  "business": {
+    "name": "Business",
+    "blurb": "For teams and accountants. Features in progress.",
+    "cta": "Notify me",
+    "features": [
+      "Multiple users (coming soon)",
+      "Roles and permissions (coming soon)",
+      "Accountant access (coming soon)",
+      "Recurring invoices (coming soon)",
+      "Automation (coming soon)"
+    ]
+  }
+}

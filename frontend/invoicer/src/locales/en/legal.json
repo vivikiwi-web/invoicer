@@ -1,0 +1,141 @@
+{
+  "updated": "Last updated: 1 September 2026",
+  "operator": "The service is operated by [LEGAL_NAME], registration code [REG_CODE], VAT [VAT_CODE], address [ADDRESS], email [CONTACT_EMAIL].",
+  "contact": "Contact: [CONTACT_EMAIL].",
+  "nav": {
+    "privacy": "Privacy policy",
+    "cookies": "Cookie policy",
+    "terms": "Terms of use",
+    "billing": "Billing terms",
+    "refund": "Refund policy"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "metaTitle": "Privacy policy — Invoicer",
+    "metaDescription": "How Invoicer processes personal data.",
+    "intro": "This policy explains what personal data we collect, why, and how long we keep it when you use Invoicer (the Service).",
+    "controller": "The controller is [LEGAL_NAME], [ADDRESS], [CONTACT_EMAIL].",
+    "sections": [
+      {
+        "h": "Data we collect",
+        "p": "Account data (name, email, password hash), company details you enter, client and invoice records, payment and expense data, technical logs (IP, browser) for security, and — if you consent — analytics events without invoice contents."
+      },
+      {
+        "h": "How we use it",
+        "p": "To provide the Service, create invoices and PDFs, run AI features (receipt scan, text drafts) on our server, keep the product secure, meet legal duties, and — only with consent — product analytics."
+      },
+      {
+        "h": "Legal bases",
+        "p": "Contract (your account and invoices), legitimate interest (security, abuse prevention), consent (analytics cookies), and legal obligation where it applies."
+      },
+      {
+        "h": "AI processing",
+        "p": "Receipt files and short context fields are sent to Google Gemini via our backend. We do not store your prompts in analytics. We do not send invoice contents to PostHog."
+      },
+      {
+        "h": "Retention",
+        "p": "We keep account data while the account is active and for a reasonable period after closure if the law requires it. Cookie consent is stored for about 180 days."
+      },
+      {
+        "h": "Your rights",
+        "p": "You may request access, correction, deletion, restriction, portability, and object where we rely on legitimate interest. You may lodge a complaint with the relevant supervisory authority."
+      }
+    ]
+  },
+  "cookies": {
+    "title": "Cookie policy",
+    "metaTitle": "Cookie policy — Invoicer",
+    "metaDescription": "Cookies used by Invoicer.",
+    "intro": "Cookies and similar storage keep you signed in, remember theme and language, and, if you agree, analytics.",
+    "sections": [
+      {
+        "h": "Necessary",
+        "p": "aimb_token (sign-in), arr-theme (light/dark), invoicer-locale (UI language), invoicer_consent (your choice). The Service cannot run safely without these."
+      },
+      {
+        "h": "Analytics",
+        "p": "PostHog, only if you accept all or enable analytics in Cookie settings. Autocapture and session replay are off. You can withdraw anytime."
+      },
+      {
+        "h": "Third parties",
+        "p": "We do not use advertising or marketing cookies. Stripe billing is not enabled yet."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of use",
+    "metaTitle": "Terms of use — Invoicer",
+    "metaDescription": "Terms for using Invoicer.",
+    "intro": "By using Invoicer you agree to these terms. If you do not agree, do not use the Service.",
+    "sections": [
+      {
+        "h": "The Service",
+        "p": "Invoicer is a tool for invoices and related records. AI features draft text; reminders are not emailed automatically. You remain responsible for invoice content, VAT, and bookkeeping."
+      },
+      {
+        "h": "Your account",
+        "p": "Provide accurate details, protect your password, and use the Service lawfully. Do not attempt to access other accounts or disrupt the system."
+      },
+      {
+        "h": "Intellectual property",
+        "p": "The Invoicer brand and software belong to [LEGAL_NAME]. Client and invoice data you enter remain yours."
+      },
+      {
+        "h": "Limitation of liability",
+        "p": "The Service is provided as is. To the extent allowed by law we are not liable for indirect loss, lost revenue, or temporary outages of third parties (including the AI provider)."
+      },
+      {
+        "h": "Termination",
+        "p": "You may stop using the Service at any time. We may suspend an account that breaks these terms or poses a security risk."
+      },
+      {
+        "h": "Governing law",
+        "p": "The laws of the Republic of Lithuania apply, except where mandatory consumer rules say otherwise."
+      }
+    ]
+  },
+  "billing": {
+    "title": "Billing terms",
+    "metaTitle": "Billing terms — Invoicer",
+    "metaDescription": "Invoicer plans and payment.",
+    "intro": "Paid subscription checkout via Stripe is not enabled yet. The Free plan is free. Pro is shown for marketing; purchase will come later.",
+    "sections": [
+      {
+        "h": "Plans",
+        "p": "Free is free. Pro is €9.99 per month once billing is on. Business is coming soon and is not for sale."
+      },
+      {
+        "h": "VAT",
+        "p": "VAT may apply. The payable amount and VAT ID will appear on the invoice when billing is live."
+      },
+      {
+        "h": "Renewal",
+        "p": "When subscriptions are enabled, billing repeats monthly until you cancel."
+      },
+      {
+        "h": "Contact",
+        "p": "For billing questions write to [CONTACT_EMAIL]."
+      }
+    ]
+  },
+  "refund": {
+    "title": "Cancellation and refund policy",
+    "metaTitle": "Refund policy — Invoicer",
+    "metaDescription": "Cancelling and refunds for Invoicer subscriptions.",
+    "intro": "While paid subscriptions are off, there is nothing to refund. The rules below will apply when Pro can be purchased.",
+    "sections": [
+      {
+        "h": "Cancellation",
+        "p": "You will be able to cancel Pro before the next billing period. Free needs no cancellation — stop using the Service or delete your account."
+      },
+      {
+        "h": "Refunds",
+        "p": "For a digital service that has begun, the 14-day withdrawal right may not apply if you asked us to start immediately. We will review individual cases at [CONTACT_EMAIL]."
+      },
+      {
+        "h": "Outages",
+        "p": "If the Service is unavailable because of us for an unreasonable period, contact us and we will look for a fair remedy."
+      }
+    ]
+  }
+}

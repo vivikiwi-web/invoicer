@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { LocaleProvider } from "@/context/LocaleContext";
+import { ConsentProvider } from "@/context/ConsentContext";
 import { UIProvider } from "@/context/UIContext";
 import { router } from "@/routes";
 
@@ -23,7 +25,11 @@ export default function App() {
         <ThemeProvider>
           <UIProvider>
             <AuthProvider>
-              <RouterProvider router={router} />
+              <LocaleProvider>
+                <ConsentProvider>
+                  <RouterProvider router={router} />
+                </ConsentProvider>
+              </LocaleProvider>
             </AuthProvider>
           </UIProvider>
         </ThemeProvider>

@@ -26,7 +26,9 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useReports } from "@/hooks/useFeatures";
-import { formatMoney } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
+import { formatMoney, formatMonthLabel } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const STATUS_COLORS = {
   draft: "var(--ink-muted)",
@@ -44,14 +46,33 @@ const tooltipStyle = {
 };
 
 export default function Reports() {
+  const { t } = useTranslation("reports");
+  const { t: tc } = useTranslation("common");
   const { data, isLoading } = useReports();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
+  const money = (n: number) => formatMoney(n, currency);
 
   if (isLoading) return <ReportsSkeleton />;
-  if (!data) return <EmptyState icon={BarChart3} title="No report data" description="Add invoices to see analytics." />;
+  if (!data) return <EmptyState icon={BarChart3} title={t("empty")} description={t("emptyBody")} />;
 
   const { totals, monthly, aging, topClients, statusBreakdown } = data;
+  const chartMonthly = monthly.map((m) => ({ ...m, label: m.ym ? formatMonthLabel(m.ym) : m.label }));
+  const agingRows = aging.map((a) => ({
+    ...a,
+    bucket:
+      a.bucket === "Current"
+        ? t("agingBuckets.current")
+        : a.bucket === "1-30d"
+          ? t("agingBuckets.d30")
+          : a.bucket === "31-60d"
+            ? t("agingBuckets.d60")
+            : a.bucket === "61-90d"
+              ? t("agingBuckets.d90")
+              : t("agingBuckets.older"),
+  }));
   const statusData = statusBreakdown.filter((s) => s.value > 0);
-  const agingHasData = aging.some((a) => a.value > 0);
+  const agingHasData = agingRows.some((a) => a.value > 0);
   const maxClient = Math.max(1, ...topClients.map((c) => c.billed));
 
   function exportCSV() {
@@ -63,7 +84,7 @@ export default function Reports() {
       ["Outstanding", totals.outstanding],
       [],
       ["Month", "Revenue", "Expenses"],
-      ...monthly.map((m) => [m.label, m.revenue, m.expenses]),
+      ...monthly.map((m) => [m.ym || m.label, m.revenue, m.expenses]),
       [],
       ["Aging bucket", "Amount"],
       ...aging.map((a) => [a.bucket, a.value]),
@@ -84,20 +105,20 @@ export default function Reports() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports & Analytics"
-        description="Revenue, profit, aging, and your top clients at a glance."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button variant="outline" onClick={exportCSV}>
-            <Download size={15} /> Export CSV
+            <Download size={15} /> {t("exportCsv")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard label="Total Revenue" value={formatMoney(totals.revenue)} icon={Wallet} accent />
-        <StatCard label="Total Expenses" value={formatMoney(totals.expenses)} icon={Receipt} />
-        <StatCard label="Net Profit" value={formatMoney(totals.netProfit)} icon={TrendingUp} />
-        <StatCard label="Outstanding" value={formatMoney(totals.outstanding)} icon={Clock} />
+        <StatCard label={t("revenue")} value={money(totals.revenue)} icon={Wallet} accent />
+        <StatCard label={t("expenses")} value={money(totals.expenses)} icon={Receipt} />
+        <StatCard label={t("net")} value={money(totals.netProfit)} icon={TrendingUp} />
+        <StatCard label={t("outstanding")} value={money(totals.outstanding)} icon={Clock} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -106,19 +127,19 @@ export default function Reports() {
           <Card padding="lg" className="h-full">
             <CardHeader>
               <div>
-                <CardTitle>Revenue vs Expenses</CardTitle>
-                <CardDescription>Paid revenue and expenses, last 6 months</CardDescription>
+                <CardTitle>{t("revenueVsExpenses")}</CardTitle>
+                <CardDescription>{t("last6")}</CardDescription>
               </div>
             </CardHeader>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthly} margin={{ top: 8, right: 4, bottom: 0, left: -8 }}>
+              <BarChart data={chartMonthly} margin={{ top: 8, right: 4, bottom: 0, left: -8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
-                <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
+                <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v, n) => [money(Number(v)), n === "revenue" ? t("revenue") : t("expenses")]} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Bar name="Revenue" dataKey="revenue" fill="var(--accent)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
-                <Bar name="Expenses" dataKey="expenses" fill="var(--warning)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+                <Bar name={t("revenue")} dataKey="revenue" fill="var(--accent)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+                <Bar name={t("expenses")} dataKey="expenses" fill="var(--warning)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -128,8 +149,8 @@ export default function Reports() {
         <Card padding="lg">
           <CardHeader>
             <div>
-              <CardTitle>Invoice status</CardTitle>
-              <CardDescription>By amount</CardDescription>
+              <CardTitle>{t("statusBreakdown")}</CardTitle>
+              <CardDescription>{t("billed")}</CardDescription>
             </div>
           </CardHeader>
           {statusData.length ? (
@@ -139,21 +160,21 @@ export default function Reports() {
                   <Pie data={statusData} dataKey="value" innerRadius={50} outerRadius={72} paddingAngle={2} stroke="none" isAnimationActive={false}>
                     {statusData.map((s) => <Cell key={s.key} fill={STATUS_COLORS[s.key]} />)}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [money(Number(v)), n]} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-2 mt-2">
                 {statusData.map((s) => (
                   <div key={s.key} className="flex items-center gap-2 text-sm">
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: STATUS_COLORS[s.key] }} />
-                    <span className="text-[var(--ink-muted)] flex-1">{s.name}</span>
-                    <span className="tabular font-medium text-[var(--ink)]">{formatMoney(s.value)}</span>
+                    <span className="text-[var(--ink-muted)] flex-1">{tc(`status.${s.key}`)}</span>
+                    <span className="tabular font-medium text-[var(--ink)]">{money(s.value)}</span>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <div className="h-[220px] flex items-center justify-center text-sm text-[var(--ink-muted)]">No invoices yet</div>
+            <div className="h-[220px] flex items-center justify-center text-sm text-[var(--ink-muted)]">{t("empty")}</div>
           )}
         </Card>
       </div>
@@ -163,26 +184,26 @@ export default function Reports() {
         <Card padding="lg">
           <CardHeader>
             <div>
-              <CardTitle>Accounts receivable aging</CardTitle>
-              <CardDescription>Unpaid invoices by how overdue they are</CardDescription>
+              <CardTitle>{t("aging")}</CardTitle>
+              <CardDescription>{t("outstanding")}</CardDescription>
             </div>
           </CardHeader>
           {agingHasData ? (
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={aging} margin={{ top: 8, right: 4, bottom: 0, left: -8 }}>
+              <BarChart data={agingRows} margin={{ top: 8, right: 4, bottom: 0, left: -8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
-                <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Amount"]} />
+                <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [money(Number(v)), t("amount")]} />
                 <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={48} isAnimationActive={false}>
-                  {aging.map((a, i) => (
+                  {agingRows.map((a, i) => (
                     <Cell key={i} fill={i === 0 ? "var(--accent)" : i >= 3 ? "var(--danger)" : "var(--warning)"} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[240px] flex items-center justify-center text-sm text-[var(--ink-muted)]">Nothing outstanding — you're all caught up! 🎉</div>
+            <div className="h-[240px] flex items-center justify-center text-sm text-[var(--ink-muted)]">{t("allCaughtUp")}</div>
           )}
         </Card>
 
@@ -190,8 +211,8 @@ export default function Reports() {
         <Card padding="lg">
           <CardHeader>
             <div>
-              <CardTitle>Top clients</CardTitle>
-              <CardDescription>By total billed</CardDescription>
+              <CardTitle>{t("topClients")}</CardTitle>
+              <CardDescription>{t("byTotalBilled")}</CardDescription>
             </div>
           </CardHeader>
           {topClients.length ? (
@@ -200,7 +221,7 @@ export default function Reports() {
                 <div key={c.id}>
                   <div className="flex items-center justify-between text-sm mb-1.5">
                     <span className="font-medium text-[var(--ink)] truncate">{c.name}</span>
-                    <span className="tabular font-semibold text-[var(--ink)] shrink-0 ml-3">{formatMoney(c.billed)}</span>
+                    <span className="tabular font-semibold text-[var(--ink)] shrink-0 ml-3">{money(c.billed)}</span>
                   </div>
                   <div className="h-2 rounded-full bg-[var(--surface-2)] overflow-hidden">
                     <div
@@ -212,7 +233,7 @@ export default function Reports() {
               ))}
             </div>
           ) : (
-            <div className="h-[240px] flex items-center justify-center text-sm text-[var(--ink-muted)]">No client billing yet</div>
+            <div className="h-[240px] flex items-center justify-center text-sm text-[var(--ink-muted)]">{t("noClientBilling")}</div>
           )}
         </Card>
       </div>

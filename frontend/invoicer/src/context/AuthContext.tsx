@@ -7,8 +7,10 @@ import {
   type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { User } from "@shared/types";
+import type { Locale, User } from "@shared/types";
 import { authApi, type AuthCredentials, type RegisterPayload } from "@/api/auth";
+import { analytics } from "@/lib/analytics";
+import { readStoredLocale } from "@/i18n";
 
 interface AuthContextValue {
   user: User | null;
@@ -17,7 +19,7 @@ interface AuthContextValue {
   register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
-  updateProfile: (payload: { name: string }) => Promise<User>;
+  updateProfile: (payload: { name?: string; locale?: Locale }) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -49,12 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const { user: next } = await authApi.register(payload);
+    const { user: next } = await authApi.register({
+      ...payload,
+      locale: payload.locale || readStoredLocale() || "lt",
+    });
     setUser(next);
     return next;
   }, []);
 
-  const updateProfile = useCallback(async (payload: { name: string }) => {
+  const updateProfile = useCallback(async (payload: { name?: string; locale?: Locale }) => {
     const { user: next } = await authApi.updateProfile(payload);
     setUser(next);
     return next;
@@ -66,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       queryClient.clear();
+      analytics.reset();
     }
   }, [queryClient]);
 

@@ -6,6 +6,9 @@ import {
   Image,
   StyleSheet,
 } from "@react-pdf/renderer";
+import type { CompanySettings, Invoice } from "@shared/types";
+import { intlLocale, isEffectiveStatus } from "@shared/types";
+import i18n from "@/i18n";
 import { formatMoney, formatDate } from "@/lib/utils";
 
 const TEAL = "#0d9488";
@@ -73,10 +76,20 @@ const styles = StyleSheet.create({
   footer: { marginTop: 30, textAlign: "center", color: MUTED, fontSize: 8 },
 });
 
-export function InvoiceDocument({ invoice, settings }) {
-  const s = settings || {};
-  const currency = invoice.currency || "USD";
-  const statusLabel = (invoice.effective_status || invoice.status || "draft").toUpperCase();
+export function InvoiceDocument({
+  invoice,
+  settings,
+}: {
+  invoice: Invoice;
+  settings?: CompanySettings | null;
+}) {
+  const s = settings || ({} as Partial<CompanySettings>);
+  const currency = invoice.currency || "EUR";
+  const docLang = invoice.document_language === "lt" ? "lt" : "en";
+  const t = i18n.getFixedT(docLang, "pdf");
+  const loc = intlLocale(docLang);
+  const statusKey = invoice.effective_status || invoice.status || "draft";
+  const statusLabel = t(`status.${isEffectiveStatus(statusKey) ? statusKey : "draft"}`);
 
   return (
     <Document title={invoice.invoice_number}>
@@ -85,13 +98,13 @@ export function InvoiceDocument({ invoice, settings }) {
         <View style={styles.headerRow}>
           <View>
             {s.logo_url ? <Image src={s.logo_url} style={styles.logo} /> : null}
-            <Text style={styles.company}>{s.company_name || "Your Company"}</Text>
+            <Text style={styles.company}>{s.company_name || t("yourCompany")}</Text>
             {s.address ? <Text style={styles.muted}>{s.address}</Text> : null}
             {s.email ? <Text style={styles.muted}>{s.email}</Text> : null}
             {s.phone ? <Text style={styles.muted}>{s.phone}</Text> : null}
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.invoiceTitle}>INVOICE</Text>
+            <Text style={styles.invoiceTitle}>{t("invoice")}</Text>
             <Text style={[styles.muted, { marginTop: 4 }]}>{invoice.invoice_number}</Text>
             <Text style={styles.badge}>{statusLabel}</Text>
           </View>
@@ -100,7 +113,7 @@ export function InvoiceDocument({ invoice, settings }) {
         {/* Meta */}
         <View style={styles.metaRow}>
           <View style={styles.metaBlock}>
-            <Text style={styles.label}>Bill To</Text>
+            <Text style={styles.label}>{t("billTo")}</Text>
             <Text style={styles.strong}>{invoice.client_name || "—"}</Text>
             {invoice.client_company ? <Text style={styles.muted}>{invoice.client_company}</Text> : null}
             {invoice.client_email ? <Text style={styles.muted}>{invoice.client_email}</Text> : null}
@@ -108,17 +121,17 @@ export function InvoiceDocument({ invoice, settings }) {
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <View style={{ flexDirection: "row", marginBottom: 6 }}>
-              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>Issued</Text>
-              <Text style={{ width: 90, textAlign: "right" }}>{formatDate(invoice.issue_date)}</Text>
+              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>{t("issued")}</Text>
+              <Text style={{ width: 90, textAlign: "right" }}>{formatDate(invoice.issue_date, undefined, loc)}</Text>
             </View>
             <View style={{ flexDirection: "row", marginBottom: 6 }}>
-              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>Due</Text>
-              <Text style={{ width: 90, textAlign: "right" }}>{formatDate(invoice.due_date)}</Text>
+              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>{t("due")}</Text>
+              <Text style={{ width: 90, textAlign: "right" }}>{formatDate(invoice.due_date, undefined, loc)}</Text>
             </View>
             <View style={{ flexDirection: "row" }}>
-              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>Balance</Text>
+              <Text style={[styles.label, { width: 70, textAlign: "right", marginRight: 10 }]}>{t("balance")}</Text>
               <Text style={[styles.strong, { width: 90, textAlign: "right" }]}>
-                {formatMoney(invoice.total, currency)}
+                {formatMoney(invoice.total, currency, loc)}
               </Text>
             </View>
           </View>
@@ -127,17 +140,17 @@ export function InvoiceDocument({ invoice, settings }) {
         {/* Line items */}
         <View style={styles.table}>
           <View style={styles.tHead}>
-            <Text style={[styles.cDesc, styles.label]}>Description</Text>
-            <Text style={[styles.cQty, styles.label]}>Qty</Text>
-            <Text style={[styles.cRate, styles.label]}>Rate</Text>
-            <Text style={[styles.cAmt, styles.label]}>Amount</Text>
+            <Text style={[styles.cDesc, styles.label]}>{t("description")}</Text>
+            <Text style={[styles.cQty, styles.label]}>{t("qty")}</Text>
+            <Text style={[styles.cRate, styles.label]}>{t("rate")}</Text>
+            <Text style={[styles.cAmt, styles.label]}>{t("amount")}</Text>
           </View>
           {(invoice.items || []).map((it, i) => (
             <View style={styles.tRow} key={i}>
               <Text style={styles.cDesc}>{it.description || "—"}</Text>
               <Text style={styles.cQty}>{Number(it.quantity)}</Text>
-              <Text style={styles.cRate}>{formatMoney(it.rate, currency)}</Text>
-              <Text style={styles.cAmt}>{formatMoney(it.amount, currency)}</Text>
+              <Text style={styles.cRate}>{formatMoney(it.rate, currency, loc)}</Text>
+              <Text style={styles.cAmt}>{formatMoney(it.amount, currency, loc)}</Text>
             </View>
           ))}
         </View>
@@ -145,22 +158,22 @@ export function InvoiceDocument({ invoice, settings }) {
         {/* Totals */}
         <View style={styles.totals}>
           <View style={styles.totalRow}>
-            <Text style={styles.muted}>Subtotal</Text>
-            <Text>{formatMoney(invoice.subtotal, currency)}</Text>
+            <Text style={styles.muted}>{t("subtotal")}</Text>
+            <Text>{formatMoney(invoice.subtotal, currency, loc)}</Text>
           </View>
           {Number(invoice.discount) > 0 && (
             <View style={styles.totalRow}>
-              <Text style={styles.muted}>Discount</Text>
-              <Text>− {formatMoney(invoice.discount, currency)}</Text>
+              <Text style={styles.muted}>{t("discount")}</Text>
+              <Text>− {formatMoney(invoice.discount, currency, loc)}</Text>
             </View>
           )}
           <View style={styles.totalRow}>
-            <Text style={styles.muted}>Tax ({Number(invoice.tax_rate)}%)</Text>
-            <Text>{formatMoney(invoice.tax_amount, currency)}</Text>
+            <Text style={styles.muted}>{t("tax", { rate: Number(invoice.tax_rate) })}</Text>
+            <Text>{formatMoney(invoice.tax_amount, currency, loc)}</Text>
           </View>
           <View style={styles.grandRow}>
-            <Text style={styles.grand}>Total</Text>
-            <Text style={styles.grand}>{formatMoney(invoice.total, currency)}</Text>
+            <Text style={styles.grand}>{t("total")}</Text>
+            <Text style={styles.grand}>{formatMoney(invoice.total, currency, loc)}</Text>
           </View>
         </View>
 
@@ -169,13 +182,13 @@ export function InvoiceDocument({ invoice, settings }) {
           <View style={styles.notes}>
             {invoice.notes ? (
               <>
-                <Text style={styles.label}>Notes</Text>
+                <Text style={styles.label}>{t("notes")}</Text>
                 <Text style={{ marginBottom: 8 }}>{invoice.notes}</Text>
               </>
             ) : null}
             {invoice.terms ? (
               <>
-                <Text style={styles.label}>Terms</Text>
+                <Text style={styles.label}>{t("terms")}</Text>
                 <Text>{invoice.terms}</Text>
               </>
             ) : null}
@@ -183,7 +196,7 @@ export function InvoiceDocument({ invoice, settings }) {
         )}
 
         <Text style={styles.footer}>
-          Thank you for your business · {s.company_name || ""}
+          {t("thanks")} · {s.company_name || ""}
         </Text>
       </Page>
     </Document>

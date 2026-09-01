@@ -33,8 +33,11 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { StatusBadge } from "@/components/ui/Badge";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useReports } from "@/hooks/useFeatures";
+import { useSettings } from "@/hooks/useSettings";
 import { aiApi } from "@/api/ai";
-import { formatMoney, formatDate, errorMessage } from "@/lib/utils";
+import { formatMoney, formatDate, formatMonthLabel, errorMessage } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { analytics } from "@/lib/analytics";
 
 // Logo palette
 const T1 = "#2dd4bf"; // teal-400
@@ -53,26 +56,34 @@ const tooltipStyle = {
 };
 
 export default function Dashboard() {
+  const { t } = useTranslation("dashboard");
   const nav = useNavigate();
   const { data, isLoading, error } = useDashboard();
   const { data: reports } = useReports();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
+  const money = (n: number) => formatMoney(n, currency);
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) {
-    return <EmptyState icon={Wallet} title="Couldn't load your dashboard" description={error.message} />;
+    return <EmptyState icon={Wallet} title={t("loadFailed")} description={error.message} />;
   }
 
   const { stats, revenueSeries, recentInvoices } = data || {};
+  const chartSeries = (revenueSeries || []).map((d) => ({
+    ...d,
+    label: d.ym ? formatMonthLabel(d.ym) : d.label,
+  }));
 
   if (!stats?.invoiceCount) {
     return (
       <EmptyState
         icon={Plus}
-        title="Welcome — let's get you paid"
-        description="Create your first invoice to start tracking revenue, outstanding balances, and overdue payments."
+        title={t("welcomeTitle")}
+        description={t("welcomeBody")}
         action={
           <Button variant="accent" size="lg" onClick={() => nav("/invoices/new")}>
-            <Plus size={16} /> Create your first invoice
+            <Plus size={16} /> {t("createFirst")}
           </Button>
         }
       />
@@ -87,21 +98,21 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">Overview</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight">{t("overview")}</h2>
           <p className="text-sm text-[var(--ink-muted)] mt-1">
-            {stats.invoiceCount} invoices · {stats.clientCount} clients
+            {t("counts", { invoices: stats.invoiceCount, clients: stats.clientCount })}
           </p>
         </div>
         <Button variant="accent" onClick={() => nav("/invoices/new")}>
-          <Plus size={16} /> Create Invoice
+          <Plus size={16} /> {t("createInvoice")}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard label="Total Revenue" value={formatMoney(stats.totalRevenue)} icon={Wallet} accent />
-        <StatCard label="Outstanding" value={formatMoney(stats.outstanding)} icon={Clock} />
-        <StatCard label="Paid this month" value={formatMoney(stats.paidThisMonth)} icon={TrendingUp} />
-        <StatCard label="Overdue" value={stats.overdueCount} suffix={stats.overdueTotal ? formatMoney(stats.overdueTotal) : undefined} icon={AlertTriangle} />
+        <StatCard label={t("revenue")} value={money(stats.totalRevenue)} icon={Wallet} accent />
+        <StatCard label={t("outstanding")} value={money(stats.outstanding)} icon={Clock} />
+        <StatCard label={t("paidThisMonth")} value={money(stats.paidThisMonth)} icon={TrendingUp} />
+        <StatCard label={t("overdue")} value={stats.overdueCount} suffix={stats.overdueTotal ? money(stats.overdueTotal) : undefined} icon={AlertTriangle} />
       </div>
 
       <AISummaryCard stats={stats} />
@@ -109,18 +120,18 @@ export default function Dashboard() {
       {/* Revenue + Collections gauge */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8">
-          <RevenueChart series={revenueSeries} />
+          <RevenueChart series={chartSeries} money={money} />
         </div>
         <div className="lg:col-span-4">
-          <CollectionsCard rate={collectionRate} collected={stats.totalRevenue} outstanding={stats.outstanding} />
+          <CollectionsCard rate={collectionRate} collected={stats.totalRevenue} outstanding={stats.outstanding} money={money} />
         </div>
       </div>
 
       {/* Status donut + Aging + Top clients */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-4"><StatusDonutCard reports={reports} total={stats.invoiceCount} /></div>
-        <div className="lg:col-span-4"><AgingCard reports={reports} /></div>
-        <div className="lg:col-span-4"><TopClientsCard reports={reports} /></div>
+        <div className="lg:col-span-4"><StatusDonutCard reports={reports} total={stats.invoiceCount} money={money} /></div>
+        <div className="lg:col-span-4"><AgingCard reports={reports} money={money} /></div>
+        <div className="lg:col-span-4"><TopClientsCard reports={reports} money={money} /></div>
       </div>
 
       <RecentInvoices invoices={recentInvoices} onOpen={(id) => nav(`/invoices/${id}`)} />
@@ -130,6 +141,9 @@ export default function Dashboard() {
 
 /* ─────────────────── AI summary ─────────────────── */
 function AISummaryCard({ stats }) {
+  const { t } = useTranslation("dashboard");
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -140,6 +154,7 @@ function AISummaryCard({ stats }) {
     try {
       const res = await aiApi.businessSummary();
       setSummary(res.summary);
+      analytics.track("ai_action_used", { kind: "business_summary" });
     } catch (e) {
       setErr(errorMessage(e, "Couldn't generate summary"));
     } finally {
@@ -156,12 +171,12 @@ function AISummaryCard({ stats }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="font-display text-sm font-semibold tracking-tight">AI Business Summary</div>
-              <div className="text-xs text-[var(--ink-muted)]">A plain-English read on this month's numbers</div>
+              <div className="font-display text-sm font-semibold tracking-tight">{t("aiSummary")}</div>
+              <div className="text-xs text-[var(--ink-muted)]">{t("aiSubtitle")}</div>
             </div>
             <Button variant="soft" size="sm" onClick={generate} disabled={loading}>
               {loading ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-              {summary ? "Regenerate" : "Generate"}
+              {summary ? t("regenerate") : t("generate")}
             </Button>
           </div>
           {err && <p className="text-sm text-[var(--danger)] mt-3">{err}</p>}
@@ -170,8 +185,8 @@ function AISummaryCard({ stats }) {
           ) : (
             !err && (
               <p className="text-sm text-[var(--ink-muted)] mt-3">
-                {stats.overdueCount ? `You have ${stats.overdueCount} overdue invoice${stats.overdueCount > 1 ? "s" : ""} totaling ${formatMoney(stats.overdueTotal)}. ` : ""}
-                Click generate for an AI-written summary and a follow-up suggestion.
+                {stats.overdueCount ? t("overdueHint", { count: stats.overdueCount, amount: formatMoney(stats.overdueTotal, currency) }) : ""}
+                {t("clickGenerate")}
               </p>
             )
           )}
@@ -182,15 +197,16 @@ function AISummaryCard({ stats }) {
 }
 
 /* ─────────────────── Revenue area chart ─────────────────── */
-function RevenueChart({ series }) {
+function RevenueChart({ series, money }) {
+  const { t } = useTranslation("dashboard");
   const dataArr = series || [];
   const hasRevenue = dataArr.some((d) => d.revenue > 0);
   return (
     <Card padding="lg" className="h-full">
       <CardHeader>
         <div>
-          <CardTitle>Revenue</CardTitle>
-          <CardDescription>Paid invoices over the last 6 months</CardDescription>
+          <CardTitle>{t("revenue")}</CardTitle>
+          <CardDescription>{t("paidOverMonths")}</CardDescription>
         </div>
       </CardHeader>
       {hasRevenue ? (
@@ -209,14 +225,14 @@ function RevenueChart({ series }) {
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Revenue"]} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [money(v), t("revenue")]} />
             <Area type="monotone" dataKey="revenue" stroke="url(#revStroke)" strokeWidth={3} fill="url(#revArea)" dot={{ r: 3, fill: T2, strokeWidth: 0 }} activeDot={{ r: 5, fill: T2 }} isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
       ) : (
         <div className="h-[280px] flex flex-col items-center justify-center text-center">
-          <div className="font-display text-sm font-semibold mb-1">No paid invoices yet</div>
-          <div className="text-xs text-[var(--ink-muted)]">Mark invoices as paid to see revenue here</div>
+          <div className="font-display text-sm font-semibold mb-1">{t("noPaidYet")}</div>
+          <div className="text-xs text-[var(--ink-muted)]">{t("markPaidHint")}</div>
         </div>
       )}
     </Card>
@@ -255,13 +271,14 @@ function HalfGauge({ value }) {
   );
 }
 
-function CollectionsCard({ rate, collected, outstanding }) {
+function CollectionsCard({ rate, collected, outstanding, money }) {
+  const { t } = useTranslation("dashboard");
   return (
     <Card padding="lg" className="h-full flex flex-col">
       <CardHeader>
         <div>
-          <CardTitle>Collections</CardTitle>
-          <CardDescription>Share of billed revenue collected</CardDescription>
+          <CardTitle>{t("collections")}</CardTitle>
+          <CardDescription>{t("collectionsHint")}</CardDescription>
         </div>
       </CardHeader>
       <div className="flex-1 flex items-center justify-center">
@@ -269,13 +286,13 @@ function CollectionsCard({ rate, collected, outstanding }) {
           <HalfGauge value={rate} />
           <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pointer-events-none">
             <span className="font-display text-[46px] font-semibold tabular text-[var(--ink)] leading-none">{rate}%</span>
-            <span className="text-sm text-[var(--ink-muted)] mt-1.5">collected</span>
+            <span className="text-sm text-[var(--ink-muted)] mt-1.5">{t("collected")}</span>
           </div>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 mt-4">
-        <GaugeStat dot={T2} label="Collected" value={formatMoney(collected)} />
-        <GaugeStat dot="var(--warning)" label="Outstanding" value={formatMoney(outstanding)} />
+        <GaugeStat dot={T2} label={t("collected")} value={money(collected)} />
+        <GaugeStat dot="var(--warning)" label={t("outstanding")} value={money(outstanding)} />
       </div>
     </Card>
   );
@@ -292,14 +309,16 @@ function GaugeStat({ dot, label, value }) {
 }
 
 /* ─────────────────── Status donut ─────────────────── */
-function StatusDonutCard({ reports, total }) {
+function StatusDonutCard({ reports, total, money }) {
+  const { t } = useTranslation("dashboard");
+  const { t: tc } = useTranslation("common");
   const data = (reports?.statusBreakdown || []).filter((s) => s.value > 0);
   return (
     <Card padding="lg" className="h-full flex flex-col">
       <CardHeader>
         <div>
-          <CardTitle>Invoice status</CardTitle>
-          <CardDescription>By amount</CardDescription>
+          <CardTitle>{t("invoiceStatus")}</CardTitle>
+          <CardDescription>{t("byAmount")}</CardDescription>
         </div>
       </CardHeader>
       {!reports ? (
@@ -318,41 +337,55 @@ function StatusDonutCard({ reports, total }) {
                 <Pie data={data} dataKey="value" innerRadius={54} outerRadius={80} paddingAngle={2} stroke="none" isAnimationActive={false}>
                   {data.map((s) => <Cell key={s.key} fill={`url(#g${s.name})`} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [money(v), n]} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="font-display text-2xl font-semibold text-[var(--ink)]">{total}</span>
-              <span className="text-[10px] text-[var(--ink-muted)]">invoices</span>
+              <span className="text-[10px] text-[var(--ink-muted)]">{t("invoices")}</span>
             </div>
           </div>
           <div className="flex-1 min-w-0 space-y-3">
             {data.map((s) => (
               <div key={s.key} className="flex items-center gap-2 text-sm">
                 <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: STATUS_COLORS[s.key] }} />
-                <span className="text-[var(--ink-muted)] flex-1">{s.name}</span>
-                <span className="tabular font-semibold text-[var(--ink)]">{formatMoney(s.value)}</span>
+                <span className="text-[var(--ink-muted)] flex-1">{tc(`status.${s.key}`)}</span>
+                <span className="tabular font-semibold text-[var(--ink)]">{money(s.value)}</span>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-sm text-[var(--ink-muted)]">No invoices yet</div>
+        <div className="flex-1 flex items-center justify-center text-sm text-[var(--ink-muted)]">{t("noRecent")}</div>
       )}
     </Card>
   );
 }
 
 /* ─────────────────── AR aging ─────────────────── */
-function AgingCard({ reports }) {
-  const aging = reports?.aging || [];
+function AgingCard({ reports, money }) {
+  const { t } = useTranslation("dashboard");
+  const { t: tr } = useTranslation("reports");
+  const aging = (reports?.aging || []).map((a) => ({
+    ...a,
+    bucket:
+      a.bucket === "Current"
+        ? tr("agingBuckets.current")
+        : a.bucket === "1-30d"
+          ? tr("agingBuckets.d30")
+          : a.bucket === "31-60d"
+            ? tr("agingBuckets.d60")
+            : a.bucket === "61-90d"
+              ? tr("agingBuckets.d90")
+              : tr("agingBuckets.older"),
+  }));
   const hasData = aging.some((a) => a.value > 0);
   return (
     <Card padding="lg" className="h-full flex flex-col">
       <CardHeader>
         <div>
-          <CardTitle>Receivables aging</CardTitle>
-          <CardDescription>Unpaid by days overdue</CardDescription>
+          <CardTitle>{t("agingTitle")}</CardTitle>
+          <CardDescription>{t("agingHint")}</CardDescription>
         </div>
       </CardHeader>
       {!reports ? (
@@ -369,7 +402,7 @@ function AgingCard({ reports }) {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 10 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 11 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
-              <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Amount"]} />
+              <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [money(v), t("amount")]} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40} isAnimationActive={false}>
                 {aging.map((_, i) => <Cell key={i} fill={i === 0 ? "url(#gCurrent)" : i >= 3 ? "url(#gDanger)" : "url(#gWarn)"} />)}
               </Bar>
@@ -377,22 +410,23 @@ function AgingCard({ reports }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-center text-sm text-[var(--ink-muted)]">All caught up 🎉</div>
+        <div className="flex-1 flex items-center justify-center text-center text-sm text-[var(--ink-muted)]">{t("allCaughtUp")}</div>
       )}
     </Card>
   );
 }
 
 /* ─────────────────── Top clients ─────────────────── */
-function TopClientsCard({ reports }) {
+function TopClientsCard({ reports, money }) {
+  const { t } = useTranslation("dashboard");
   const clients = reports?.topClients || [];
   const max = Math.max(1, ...clients.map((c) => c.billed));
   return (
     <Card padding="lg" className="h-full">
       <CardHeader>
         <div>
-          <CardTitle>Top clients</CardTitle>
-          <CardDescription>By total billed</CardDescription>
+          <CardTitle>{t("topClients")}</CardTitle>
+          <CardDescription>{t("byTotalBilled")}</CardDescription>
         </div>
       </CardHeader>
       {!reports ? (
@@ -403,7 +437,7 @@ function TopClientsCard({ reports }) {
             <div key={c.id}>
               <div className="flex items-center justify-between text-sm mb-1.5">
                 <span className="font-medium text-[var(--ink)] truncate">{c.name}</span>
-                <span className="tabular font-semibold text-[var(--ink)] shrink-0 ml-3">{formatMoney(c.billed)}</span>
+                <span className="tabular font-semibold text-[var(--ink)] shrink-0 ml-3">{money(c.billed)}</span>
               </div>
               <div className="h-2 rounded-full bg-[var(--surface-2)] overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${Math.max(5, (c.billed / max) * 100)}%`, background: `linear-gradient(90deg,${T1},${T3})` }} />
@@ -413,7 +447,7 @@ function TopClientsCard({ reports }) {
         </div>
       ) : (
         <div className="h-[150px] flex items-center justify-center text-sm text-[var(--ink-muted)]">
-          <Users size={16} className="mr-2" /> No client billing yet
+          <Users size={16} className="mr-2" /> {t("noClientBilling")}
         </div>
       )}
     </Card>
@@ -422,17 +456,19 @@ function TopClientsCard({ reports }) {
 
 /* ─────────────────── Recent invoices ─────────────────── */
 function RecentInvoices({ invoices, onOpen }) {
+  const { t } = useTranslation("dashboard");
+  const { t: ti } = useTranslation("invoices");
   const rows = invoices || [];
   return (
     <Card padding="lg">
       <CardHeader>
         <div>
-          <CardTitle>Recent invoices</CardTitle>
-          <CardDescription>Your latest 5 invoices</CardDescription>
+          <CardTitle>{t("recent")}</CardTitle>
+          <CardDescription>{t("recentHint")}</CardDescription>
         </div>
       </CardHeader>
       {rows.length === 0 ? (
-        <div className="py-10 text-center text-sm text-[var(--ink-muted)]">No invoices yet</div>
+        <div className="py-10 text-center text-sm text-[var(--ink-muted)]">{t("noRecent")}</div>
       ) : (
         <div className="flex flex-col divide-y divide-[var(--border)]">
           {rows.map((inv) => (
@@ -441,7 +477,7 @@ function RecentInvoices({ invoices, onOpen }) {
                 {inv.client_name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-[var(--ink)] truncate">{inv.client_name || "No client"}</div>
+                <div className="text-sm font-medium text-[var(--ink)] truncate">{inv.client_name || ti("noClient")}</div>
                 <div className="text-xs text-[var(--ink-muted)] tabular">{inv.invoice_number} · {formatDate(inv.issue_date)}</div>
               </div>
               <div className="text-sm font-semibold text-[var(--ink)] tabular shrink-0">{formatMoney(inv.total, inv.currency)}</div>

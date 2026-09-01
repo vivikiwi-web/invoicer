@@ -1,0 +1,63 @@
+{
+  "brand": "Invoicer",
+  "language": "Kalba",
+  "loading": "Kraunama…",
+  "saving": "Saugoma…",
+  "save": "Išsaugoti",
+  "cancel": "Atšaukti",
+  "close": "Uždaryti",
+  "delete": "Ištrinti",
+  "edit": "Redaguoti",
+  "create": "Sukurti",
+  "add": "Pridėti",
+  "search": "Ieškoti",
+  "back": "Atgal",
+  "optional": "neprivaloma",
+  "required": "privaloma",
+  "or": "arba",
+  "yes": "Taip",
+  "no": "Ne",
+  "comingSoon": "Netrukus",
+  "mostPopular": "Populiariausias",
+  "emDash": "—",
+  "skipToContent": "Eiti prie turinio",
+  "status": {
+    "draft": "Juodraštis",
+    "sent": "Išsiųsta",
+    "paid": "Apmokėta",
+    "overdue": "Vėluoja"
+  },
+  "actions": {
+    "signIn": "Prisijungti",
+    "signOut": "Atsijungti",
+    "getStarted": "Pradėti",
+    "createAccount": "Sukurti paskyrą",
+    "saveDraft": "Išsaugoti juodraštį",
+    "downloadPdf": "Atsisiųsti PDF",
+    "confirm": "Patvirtinti",
+    "notifyMe": "Pranešti, kai bus",
+    "contactUs": "Susisiekti"
+  },
+  "empty": {
+    "title": "Nieko nerasta",
+    "description": "Pakeiskite filtrus arba sukurkite naują įrašą."
+  },
+  "confirm": {
+    "title": "Patvirtinti veiksmą",
+    "deleteTitle": "Ištrinti?",
+    "cannotUndo": "Šio veiksmo atšaukti negalima."
+  },
+  "documentLanguage": {
+    "label": "Dokumento kalba",
+    "lt": "Lietuvių",
+    "en": "Anglų",
+    "inherit": "Nenustatyta (naudoti įmonės)"
+  },
+  "uiLanguage": {
+    "label": "Sąsajos kalba",
+    "lt": "Lietuvių",
+    "en": "English"
+  },
+  "currency": "Valiuta",
+  "noResults": "Nėra rezultatų"
+}

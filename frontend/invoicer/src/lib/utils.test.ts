@@ -4,11 +4,15 @@ import { isInvoiceStatus, isReminderTone } from "@shared/types";
 
 describe("formatMoney", () => {
   it("formats USD with two fraction digits", () => {
-    expect(formatMoney(1234.5, "USD")).toBe("$1,234.50");
+    expect(formatMoney(1234.5, "USD", "en")).toBe("$1,234.50");
   });
 
   it("treats null as zero", () => {
-    expect(formatMoney(null, "USD")).toBe("$0.00");
+    expect(formatMoney(null, "USD", "en")).toBe("$0.00");
+  });
+
+  it("defaults to EUR", () => {
+    expect(formatMoney(10, undefined, "en")).toBe("€10.00");
   });
 });
 
@@ -36,5 +40,12 @@ describe("shared type guards", () => {
     expect(isInvoiceStatus("overdue")).toBe(false);
     expect(isReminderTone("firm")).toBe(true);
     expect(isReminderTone("angry")).toBe(false);
+  });
+});
+
+describe("formatDate locale", () => {
+  it("formats with the given locale", () => {
+    const label = formatDate("2026-03-15T12:00:00.000Z", { month: "short", year: "numeric" }, "en");
+    expect(label).toMatch(/2026/);
   });
 });

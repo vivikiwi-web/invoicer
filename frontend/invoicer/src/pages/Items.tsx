@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Plus, Package, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -7,29 +8,30 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useItems, useItemMutations } from "@/hooks/useFeatures";
+import { useSettings } from "@/hooks/useSettings";
 import type { CatalogItem } from "@shared/types";
 import { formatMoney, errorMessage } from "@/lib/utils";
 
 export default function Items() {
+  const { t } = useTranslation("catalog");
+  const { t: tc } = useTranslation("common");
   const { data: items, isLoading } = useItems();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const [modal, setModal] = useState<Partial<CatalogItem> | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const { remove } = useItemMutations();
-
-  async function onDelete(e, item) {
-    e.stopPropagation();
-    if (!window.confirm(`Delete "${item.name}"?`)) return;
-    await remove.mutateAsync(item.id);
-  }
 
   return (
     <div>
       <PageHeader
-        title="Items & Services"
-        description="Reusable products and services you can drop into any invoice."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button variant="accent" onClick={() => setModal({})}>
-            <Plus size={16} /> Add Item
+            <Plus size={16} /> {t("add")}
           </Button>
         }
       />
@@ -43,11 +45,11 @@ export default function Items() {
       ) : !items?.length ? (
         <EmptyState
           icon={Package}
-          title="No items yet"
-          description="Save your common services and their rates to speed up invoicing."
+          title={t("empty")}
+          description={t("emptyDesc")}
           action={
             <Button variant="accent" onClick={() => setModal({})}>
-              <Plus size={16} /> Add Item
+              <Plus size={16} /> {t("add")}
             </Button>
           }
         />
@@ -70,7 +72,10 @@ export default function Items() {
                     <Pencil size={13} />
                   </button>
                   <button
-                    onClick={(e) => onDelete(e, item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPendingDelete({ id: item.id, name: item.name });
+                    }}
                     className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--danger)]"
                   >
                     <Trash2 size={13} />
@@ -79,7 +84,7 @@ export default function Items() {
               </div>
               <div className="flex items-baseline gap-1 mt-4">
                 <span className="font-display text-xl font-semibold tabular text-[var(--accent-strong)]">
-                  {formatMoney(item.rate)}
+                  {formatMoney(item.rate, currency)}
                 </span>
                 {item.unit && <span className="text-xs text-[var(--ink-muted)]">/ {item.unit}</span>}
               </div>
@@ -89,6 +94,19 @@ export default function Items() {
       )}
 
       <ItemModal open={!!modal} item={modal?.id ? modal : null} onClose={() => setModal(null)} />
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null); }}
+        title={t("deleteTitle")}
+        description={t("deleteBody", { name: pendingDelete?.name })}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        danger
+        onConfirm={async () => {
+          if (pendingDelete) await remove.mutateAsync(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -96,6 +114,8 @@ export default function Items() {
 const EMPTY = { name: "", description: "", rate: 0, unit: "" };
 
 function ItemModal({ open, item, onClose }) {
+  const { t } = useTranslation("catalog");
+  const { t: tc } = useTranslation("common");
   const isEdit = !!item;
   const { create, update } = useItemMutations();
   const [form, setForm] = useState(EMPTY);
@@ -113,7 +133,7 @@ function ItemModal({ open, item, onClose }) {
 
   async function onSubmit(e) {
     e.preventDefault();
-    if (!form.name.trim()) return setErr("Name is required");
+    if (!form.name.trim()) return setErr(t("nameRequired"));
     setSaving(true);
     setErr("");
     try {
@@ -122,7 +142,7 @@ function ItemModal({ open, item, onClose }) {
       else await create.mutateAsync(payload);
       onClose();
     } catch (ex) {
-      setErr(errorMessage(ex, "Couldn't save item"));
+      setErr(errorMessage(ex, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -142,33 +162,33 @@ function ItemModal({ open, item, onClose }) {
             className="relative w-full max-w-[460px] rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-hover p-6"
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold tracking-tight">{isEdit ? "Edit item" : "Add item"}</h3>
+              <h3 className="font-display text-lg font-semibold tracking-tight">{isEdit ? t("edit") : t("add")}</h3>
               <button type="button" onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface-2)]">
                 <X size={16} />
               </button>
             </div>
             <div className="space-y-3">
-              <Field label="Name *">
-                <Input value={form.name} onChange={set("name")} placeholder="Frontend development" />
+              <Field label={`${t("name")} *`}>
+                <Input value={form.name} onChange={set("name")} placeholder={t("namePlaceholder")} />
               </Field>
-              <Field label="Description">
-                <Input value={form.description} onChange={set("description")} placeholder="Short description" />
+              <Field label={t("descriptionLabel")}>
+                <Input value={form.description} onChange={set("description")} placeholder={t("descPlaceholder")} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Rate">
+                <Field label={t("rate")}>
                   <Input type="number" min="0" step="0.01" value={form.rate} onChange={set("rate")} className="tabular" />
                 </Field>
-                <Field label="Unit">
-                  <Input value={form.unit} onChange={set("unit")} placeholder="hour / project" />
+                <Field label={t("unit")}>
+                  <Input value={form.unit} onChange={set("unit")} placeholder={t("unitPlaceholder")} />
                 </Field>
               </div>
             </div>
             {err && <p className="text-sm text-[var(--danger)] mt-3">{err}</p>}
             <div className="flex items-center justify-end gap-2 mt-6">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={onClose}>{tc("cancel")}</Button>
               <Button type="submit" variant="accent" disabled={saving}>
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                {isEdit ? "Save" : "Add item"}
+                {isEdit ? tc("save") : t("add")}
               </Button>
             </div>
           </motion.form>

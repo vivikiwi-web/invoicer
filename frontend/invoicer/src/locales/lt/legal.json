@@ -1,0 +1,141 @@
+{
+  "updated": "Atnaujinta: 2026-09-01",
+  "operator": "Paslaugą teikia [LEGAL_NAME], juridinio asmens kodas [REG_CODE], PVM mokėtojo kodas [VAT_CODE], adresas [ADDRESS], el. paštas [CONTACT_EMAIL].",
+  "contact": "Klausimams: [CONTACT_EMAIL].",
+  "nav": {
+    "privacy": "Privatumo politika",
+    "cookies": "Slapukų politika",
+    "terms": "Naudojimosi taisyklės",
+    "billing": "Apmokėjimo sąlygos",
+    "refund": "Grąžinimo politika"
+  },
+  "privacy": {
+    "title": "Privatumo politika",
+    "metaTitle": "Privatumo politika — Invoicer",
+    "metaDescription": "Kaip Invoicer tvarko asmens duomenis.",
+    "intro": "Ši politika paaiškina, kokius asmens duomenis renkame, kodėl ir kiek laiko juos saugome, kai naudojatės Invoicer (toliau — Paslauga).",
+    "controller": "Duomenų valdytojas yra [LEGAL_NAME], [ADDRESS], [CONTACT_EMAIL].",
+    "sections": [
+      {
+        "h": "Kokius duomenis renkame",
+        "p": "Paskyros duomenys (vardas, el. paštas, slaptažodžio maiša), įmonės rekvizitai, kuriuos įvedate, klientų ir sąskaitų įrašai, mokėjimų ir išlaidų duomenys, techniniai žurnalai (IP, naršyklė) saugumui, ir — jei sutinkate — analitikos įvykiai be sąskaitų turinio."
+      },
+      {
+        "h": "Kam naudojame",
+        "p": "Paslaugai teikti ir paskyrai valdyti, sąskaitoms ir PDF kurti, DI funkcijoms (kvitų nuskaitymas, tekstų juodraščiai) mūsų serveryje, saugumui, teisiniams reikalavimams ir — tik su sutikimu — produkto analitikai."
+      },
+      {
+        "h": "Teisinis pagrindas",
+        "p": "Sutarties vykdymas (paskyra ir sąskaitos), teisėtas interesas (saugumas, piktnaudžiavimo prevencija), sutikimas (analitikos slapukai) ir teisinė prievolė (apskaita, jei taikoma)."
+      },
+      {
+        "h": "DI tvarkymas",
+        "p": "Kvito failai ir trumpi kontekstiniai laukai siunčiami Google Gemini per mūsų backend. Nesaugome jūsų raginimų analitikoje. Nesidaliname sąskaitų turiniu su PostHog."
+      },
+      {
+        "h": "Saugojimas",
+        "p": "Paskyros duomenis saugome, kol paskyra aktyvi, ir protingą laiką po uždarymo, jei to reikalauja teisės aktai. Slapukų sutikimas — apie 180 dienų."
+      },
+      {
+        "h": "Jūsų teisės",
+        "p": "Galite prašyti susipažinti, taisyti, ištrinti, apriboti tvarkymą, perkelti duomenis ir nesutikti, kai pagrindas yra teisėtas interesas. Skundą galite pateikti Valstybinei duomenų apsaugos inspekcijai."
+      }
+    ]
+  },
+  "cookies": {
+    "title": "Slapukų politika",
+    "metaTitle": "Slapukų politika — Invoicer",
+    "metaDescription": "Kokius slapukus naudoja Invoicer.",
+    "intro": "Slapukai ir panašios technologijos padeda prisiminti seansą, temą, kalbą ir, jei sutinkate, analitiką.",
+    "sections": [
+      {
+        "h": "Būtinieji",
+        "p": "aimb_token (prisijungimas), arr-theme (šviesi/tamsi tema), invoicer-locale (sąsajos kalba), invoicer_consent (jūsų pasirinkimas). Be jų Paslauga negali saugiai veikti."
+      },
+      {
+        "h": "Analitika",
+        "p": "PostHog, tik jei pasirenkate „Sutikti su visais“ arba įjungiate analitiką nustatymuose. Autocapture ir seansų įrašymas išjungti. Galite bet kada atšaukti per Slapukų nustatymus."
+      },
+      {
+        "h": "Trečiosios šalys",
+        "p": "Reklamos ar rinkodaros slapukų nenaudojame. Mokėjimo paslaugų teikėjo (Stripe) šiuo metu nėra."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Naudojimosi taisyklės",
+    "metaTitle": "Naudojimosi taisyklės — Invoicer",
+    "metaDescription": "Invoicer naudojimo sąlygos.",
+    "intro": "Naudodamiesi Invoicer sutinkate su šiomis taisyklėmis. Jei nesutinkate, Paslaugos nenaudokite.",
+    "sections": [
+      {
+        "h": "Paslauga",
+        "p": "Invoicer yra sąskaitų ir susijusių įrašų valdymo įrankis. DI funkcijos ruošia juodraščius; priminimai klientams nėra siunčiami automatiškai. Jūs atsakote už sąskaitų turinį, PVM ir apskaitos teisingumą."
+      },
+      {
+        "h": "Paskyra",
+        "p": "Privalote pateikti tikslius duomenis, saugoti slaptažodį ir naudoti Paslaugą teisėtai. Draudžiama bandyti prieiti prie kitų paskyrų ar trukdyti sistemai."
+      },
+      {
+        "h": "Intelektinė nuosavybė",
+        "p": "Invoicer prekės ženklas ir programinė įranga priklauso [LEGAL_NAME]. Jūsų įvesti klientų ir sąskaitų duomenys lieka jūsų."
+      },
+      {
+        "h": "Atsakomybės ribojimas",
+        "p": "Paslauga teikiama „tokia, kokia yra“. Neatsakome už netiesioginius nuostolius, prarastas pajamas ar trečiųjų šalių (įskaitant DI teikėjo) laikinus sutrikimus, kiek tai leidžia taikoma teisė."
+      },
+      {
+        "h": "Nutraukimas",
+        "p": "Galite nustoti naudotis bet kada. Galime sustabdyti paskyrą, jei pažeidžiamos taisyklės ar kyla saugumo rizika."
+      },
+      {
+        "h": "Taikoma teisė",
+        "p": "Taikoma Lietuvos Respublikos teisė, jei imperatyvios vartotojų apsaugos nuostatos nenumato kitaip."
+      }
+    ]
+  },
+  "billing": {
+    "title": "Apmokėjimo sąlygos",
+    "metaTitle": "Apmokėjimo sąlygos — Invoicer",
+    "metaDescription": "Kaip veikia Invoicer planai ir apmokėjimas.",
+    "intro": "Šiuo metu mokamas prenumeratos apmokėjimas per Stripe dar neįjungtas. Free planas nemokamas. Pro kaina nurodyta rinkodaroje; pirkimas bus prieinamas vėliau.",
+    "sections": [
+      {
+        "h": "Planai",
+        "p": "Free — nemokamas. Pro — 9,99 € per mėnesį, kai atsiskaitymas bus įjungtas. Business — netrukus, neperkamas."
+      },
+      {
+        "h": "PVM",
+        "p": "PVM taikomas pagal įstatymus. Galutinė mokėtina suma ir PVM kodas bus nurodyti sąskaitoje, kai atsiskaitymas veiks."
+      },
+      {
+        "h": "Atnaujinimas",
+        "p": "Kai prenumeratos bus įjungtos, mokėjimas kartosis kas mėnesį, kol atšauksite."
+      },
+      {
+        "h": "Kontaktai",
+        "p": "Dėl sąskaitų ir planų rašykite [CONTACT_EMAIL]."
+      }
+    ]
+  },
+  "refund": {
+    "title": "Atšaukimo ir grąžinimo politika",
+    "metaTitle": "Grąžinimo politika — Invoicer",
+    "metaDescription": "Atšaukimas ir pinigų grąžinimas Invoicer prenumeratoms.",
+    "intro": "Kol mokama prenumerata neįjungta, pinigų grąžinti nereikia. Toliau — taisyklės, kurios galios, kai Pro bus perkamas.",
+    "sections": [
+      {
+        "h": "Atšaukimas",
+        "p": "Galėsite atšaukti Pro prenumeratą iki kito atsiskaitymo periodo. Free planas atšaukti nereikia — tiesiog nustokite naudotis arba ištrinkite paskyrą."
+      },
+      {
+        "h": "Grąžinimai",
+        "p": "Skaitmeninei paslaugai, pradėtai teikti, įstatyminė 14 dienų atsisakymo teisė gali būti netaikoma, jei aiškiai sutikote pradėti teikimą. Individualius atvejus nagrinėsime raštu: [CONTACT_EMAIL]."
+      },
+      {
+        "h": "Techniniai nesklandumai",
+        "p": "Jei Paslauga neveikia dėl mūsų kaltės ilgiau nei protingą laiką, susisiekite — ieškosime teisingo sprendimo."
+      }
+    ]
+  }
+}

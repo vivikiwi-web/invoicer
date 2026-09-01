@@ -1,0 +1,63 @@
+{
+  "brand": "Invoicer",
+  "language": "Language",
+  "loading": "Loading…",
+  "saving": "Saving…",
+  "save": "Save",
+  "cancel": "Cancel",
+  "close": "Close",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "add": "Add",
+  "search": "Search",
+  "back": "Back",
+  "optional": "optional",
+  "required": "required",
+  "or": "or",
+  "yes": "Yes",
+  "no": "No",
+  "comingSoon": "Coming soon",
+  "mostPopular": "Most popular",
+  "emDash": "—",
+  "skipToContent": "Skip to content",
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent",
+    "paid": "Paid",
+    "overdue": "Overdue"
+  },
+  "actions": {
+    "signIn": "Sign in",
+    "signOut": "Log out",
+    "getStarted": "Get started",
+    "createAccount": "Create account",
+    "saveDraft": "Save draft",
+    "downloadPdf": "Download PDF",
+    "confirm": "Confirm",
+    "notifyMe": "Notify me",
+    "contactUs": "Contact us"
+  },
+  "empty": {
+    "title": "Nothing here yet",
+    "description": "Change filters or create a new record."
+  },
+  "confirm": {
+    "title": "Confirm action",
+    "deleteTitle": "Delete?",
+    "cannotUndo": "This cannot be undone."
+  },
+  "documentLanguage": {
+    "label": "Document language",
+    "lt": "Lithuanian",
+    "en": "English",
+    "inherit": "Not set (use company default)"
+  },
+  "uiLanguage": {
+    "label": "Interface language",
+    "lt": "Lietuvių",
+    "en": "English"
+  },
+  "currency": "Currency",
+  "noResults": "No results"
+}

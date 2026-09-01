@@ -14,6 +14,7 @@ import {
 import { cn, formatMoney } from "@/lib/utils";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useClients } from "@/hooks/useClients";
+import { useTranslation } from "react-i18next";
 
 interface PaletteItem {
   id: string;
@@ -24,13 +25,13 @@ interface PaletteItem {
   icon: LucideIcon;
 }
 
-const NAV_ITEMS: PaletteItem[] = [
-  { id: "nav:dashboard", kind: "nav", label: "Dashboard", hint: "Overview", to: "/dashboard", icon: LayoutGrid },
-  { id: "nav:invoices", kind: "nav", label: "Invoices", hint: "Browse & manage", to: "/invoices", icon: FileText },
-  { id: "nav:new", kind: "nav", label: "Create Invoice", hint: "New invoice", to: "/invoices/new", icon: Plus },
-  { id: "nav:clients", kind: "nav", label: "Clients", hint: "Manage clients", to: "/clients", icon: Users },
-  { id: "nav:settings", kind: "nav", label: "Settings", hint: "Company profile, appearance", to: "/settings", icon: SettingsIcon },
-];
+const NAV_DEFS = [
+  { id: "nav:dashboard", kind: "nav", to: "/dashboard", icon: LayoutGrid, labelKey: "dashboard", hintKey: "palette.overview" },
+  { id: "nav:invoices", kind: "nav", to: "/invoices", icon: FileText, labelKey: "invoices", hintKey: "palette.browse" },
+  { id: "nav:new", kind: "nav", to: "/invoices/new", icon: Plus, labelKey: "palette.newInvoice", hintKey: "palette.newInvoice" },
+  { id: "nav:clients", kind: "nav", to: "/clients", icon: Users, labelKey: "clients", hintKey: "palette.manageClients" },
+  { id: "nav:settings", kind: "nav", to: "/settings", icon: SettingsIcon, labelKey: "settings", hintKey: "palette.companyAppearance" },
+] as const;
 
 function scoreMatch(query: string, text: string) {
   if (!query) return 1;
@@ -53,6 +54,9 @@ export function CommandPalette({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("nav");
+  const { t: ti } = useTranslation("invoices");
+  const { t: tcl } = useTranslation("clients");
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
@@ -72,10 +76,18 @@ export function CommandPalette({
   }, [open]);
 
   const items = useMemo(() => {
+    const navItems: PaletteItem[] = NAV_DEFS.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      label: t(d.labelKey),
+      hint: t(d.hintKey),
+      to: d.to,
+      icon: d.icon,
+    }));
     const invoiceItems = (invoices || []).map((i) => ({
       id: `invoice:${i.id}`,
       kind: "invoice",
-      label: `${i.invoice_number} · ${i.client_name || "No client"}`,
+      label: `${i.invoice_number} · ${i.client_name || ti("noClient")}`,
       hint: `${i.effective_status} · ${formatMoney(i.total, i.currency)}`,
       to: `/invoices/${i.id}`,
       icon: FileText,
@@ -84,12 +96,12 @@ export function CommandPalette({
       id: `client:${c.id}`,
       kind: "client",
       label: c.name,
-      hint: c.company || c.email || "Client",
+      hint: c.company || c.email || tcl("title"),
       to: `/clients/${c.id}`,
       icon: Users,
     }));
 
-    const pool = [...NAV_ITEMS, ...invoiceItems, ...clientItems];
+    const pool = [...navItems, ...invoiceItems, ...clientItems];
     if (!query.trim()) return pool;
 
     return pool
@@ -97,7 +109,7 @@ export function CommandPalette({
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.it);
-  }, [invoices, clients, query]);
+  }, [invoices, clients, query, t, ti, tcl]);
 
   useEffect(() => setActiveIdx(0), [query]);
 
@@ -127,9 +139,9 @@ export function CommandPalette({
   }
 
   const groups = [
-    { key: "nav", title: "Navigate", items: items.filter((i) => i.kind === "nav") },
-    { key: "invoice", title: "Invoices", items: items.filter((i) => i.kind === "invoice") },
-    { key: "client", title: "Clients", items: items.filter((i) => i.kind === "client") },
+    { key: "nav", title: t("palette.nav"), items: items.filter((i) => i.kind === "nav") },
+    { key: "invoice", title: t("invoices"), items: items.filter((i) => i.kind === "invoice") },
+    { key: "client", title: t("clients"), items: items.filter((i) => i.kind === "client") },
   ];
 
   let renderIdx = -1;
@@ -196,7 +208,7 @@ export function CommandPalette({
           <motion.div
             aria-modal="true"
             role="dialog"
-            aria-label="Command palette"
+            aria-label={t("searchTitle")}
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
@@ -210,8 +222,8 @@ export function CommandPalette({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                aria-label="Search invoices, clients, and pages"
-                placeholder="Search invoices, clients, or jump to a page..."
+                aria-label={t("searchPlaceholder")}
+                placeholder={t("palette.placeholder")}
                 className="flex-1 bg-transparent outline-none text-sm text-[var(--ink)] placeholder:text-[var(--ink-muted)]"
               />
               <kbd className="hidden sm:inline-flex items-center gap-1 text-[10px] px-2 h-6 rounded-md bg-[var(--surface-2)] text-[var(--ink-muted)] border border-[var(--border)] font-medium">
@@ -222,7 +234,7 @@ export function CommandPalette({
             <div ref={listRef} className="max-h-[52vh] overflow-y-auto p-2">
               {items.length === 0 && (
                 <div className="text-center text-sm text-[var(--ink-muted)] py-10">
-                  No matches for &ldquo;{query}&rdquo;
+                  {t("palette.empty")}
                 </div>
               )}
 
@@ -243,14 +255,14 @@ export function CommandPalette({
                 <span className="flex items-center gap-1">
                   <kbd className="px-1.5 h-5 rounded bg-[var(--surface)] border border-[var(--border)] inline-flex items-center">↑</kbd>
                   <kbd className="px-1.5 h-5 rounded bg-[var(--surface)] border border-[var(--border)] inline-flex items-center">↓</kbd>
-                  to navigate
+                  {t("paletteNavigate")}
                 </span>
                 <span className="flex items-center gap-1">
                   <kbd className="px-1.5 h-5 rounded bg-[var(--surface)] border border-[var(--border)] inline-flex items-center">↵</kbd>
-                  to select
+                  {t("paletteSelect")}
                 </span>
               </div>
-              <span>{items.length} result{items.length === 1 ? "" : "s"}</span>
+              <span>{t("paletteResults", { count: items.length })}</span>
             </div>
           </motion.div>
         </motion.div>

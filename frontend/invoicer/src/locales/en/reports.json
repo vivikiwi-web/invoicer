@@ -1,0 +1,31 @@
+{
+  "title": "Reports",
+  "description": "Revenue, expenses, and aging balances.",
+  "revenue": "Revenue",
+  "expenses": "Expenses",
+  "net": "Net profit",
+  "outstanding": "Outstanding",
+  "invoiceCount": "Invoices",
+  "monthly": "By month",
+  "aging": "Aging",
+  "topClients": "Top clients",
+  "statusBreakdown": "By status",
+  "billed": "Billed",
+  "paid": "Paid",
+  "agingBuckets": {
+    "current": "Current",
+    "d30": "1–30 days",
+    "d60": "31–60 days",
+    "d90": "61–90 days",
+    "older": "90+ days"
+  },
+  "exportCsv": "Export CSV",
+  "empty": "No report data",
+  "emptyBody": "Add invoices to see analytics.",
+  "revenueVsExpenses": "Revenue vs expenses",
+  "last6": "Paid revenue and expenses, last 6 months",
+  "amount": "Amount",
+  "allCaughtUp": "Nothing outstanding — you're all caught up.",
+  "noClientBilling": "No client billing yet",
+  "byTotalBilled": "By total billed"
+}

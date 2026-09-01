@@ -22,13 +22,25 @@ import { useExpenses, useExpenseMutations } from "@/hooks/useFeatures";
 import type { Expense } from "@shared/types";
 import { aiApi } from "@/api/ai";
 import { formatMoney, formatDate, toDateInput, cn, errorMessage } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { StatCardSkeleton } from "@/components/ui/Skeleton";
+import { useTranslation } from "react-i18next";
+import { useSettings } from "@/hooks/useSettings";
+import { analytics } from "@/lib/analytics";
+import { CURRENCY_CODES } from "@shared/types";
 
 export default function Expenses() {
+  const { t } = useTranslation("expenses");
+  const { t: tc } = useTranslation("common");
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "EUR";
   const [category, setCategory] = useState("all");
   const { data, isLoading } = useExpenses({ category });
   const { remove } = useExpenseMutations();
   const [modal, setModal] = useState<Partial<Expense> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanErr, setScanErr] = useState("");
 
@@ -50,8 +62,10 @@ export default function Expenses() {
         amount: res.total || res.subtotal || 0,
         notes: res.notes || (res.lineItems?.[0]?.description ?? ""),
       });
+      analytics.track("receipt_scanned");
+      analytics.track("ai_action_used", { kind: "receipt_scan" });
     } catch (ex) {
-      setScanErr(errorMessage(ex, "Couldn't read that receipt"));
+      setScanErr(errorMessage(ex, t("scanFailed")));
     } finally {
       setScanning(false);
     }
@@ -59,24 +73,23 @@ export default function Expenses() {
 
   async function onDelete(e, exp) {
     e.stopPropagation();
-    if (!window.confirm(`Delete expense from ${exp.vendor || "vendor"}?`)) return;
-    await remove.mutateAsync(exp.id);
+    setPendingDelete(exp.id);
   }
 
   return (
     <div>
       <PageHeader
-        title="Expenses"
-        description="Track business costs. Upload a receipt and let AI fill it in."
+        title={t("title")}
+        description={t("description")}
         actions={
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={onScan} />
             <Button variant="soft" onClick={() => fileRef.current?.click()} disabled={scanning}>
               {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />}
-              Scan receipt
+              {t("scan")}
             </Button>
             <Button variant="accent" onClick={() => setModal({})}>
-              <Plus size={16} /> Add Expense
+              <Plus size={16} /> {t("add")}
             </Button>
           </div>
         }
@@ -89,8 +102,17 @@ export default function Expenses() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6 max-w-2xl">
-        <StatCard label="Total expenses" value={formatMoney(data?.totals?.total || 0)} icon={Receipt} />
-        <StatCard label="This month" value={formatMoney(data?.totals?.thisMonth || 0)} icon={Receipt} accent />
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard label={t("total")} value={formatMoney(data?.totals?.total || 0, currency)} icon={Receipt} />
+            <StatCard label={t("thisMonth")} value={formatMoney(data?.totals?.thisMonth || 0, currency)} icon={Receipt} accent />
+          </>
+        )}
       </div>
 
       {categories.length > 0 && (
@@ -104,7 +126,7 @@ export default function Expenses() {
                 category === c ? "bg-[var(--ink)] text-[var(--bg)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
               )}
             >
-              {c === "all" ? "All" : c}
+              {c === "all" ? t("all") : t(`categories.${c}`, { defaultValue: c })}
             </button>
           ))}
         </div>
@@ -117,18 +139,18 @@ export default function Expenses() {
       ) : expenses.length === 0 ? (
         <EmptyState
           icon={Receipt}
-          title={category !== "all" ? "No expenses in this category" : "No expenses yet"}
-          description="Scan a receipt or add one manually to start tracking costs."
+          title={category !== "all" ? t("emptyCategory") : t("empty")}
+          description={t("emptyDesc")}
           action={
             <Button variant="accent" onClick={() => setModal({})}>
-              <Plus size={16} /> Add Expense
+              <Plus size={16} /> {t("add")}
             </Button>
           }
         />
       ) : (
         <Card padding="none" className="overflow-hidden">
           <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_0.8fr_auto] gap-4 px-5 py-3 border-b border-[var(--border)] text-[11px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold">
-            <span>Vendor</span><span>Category</span><span>Date</span><span className="text-right">Amount</span><span></span>
+            <span>{t("vendor")}</span><span>{t("category")}</span><span>{t("date")}</span><span className="text-right">{t("amount")}</span><span></span>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {expenses.map((exp) => (
@@ -154,6 +176,19 @@ export default function Expenses() {
       )}
 
       <ExpenseModal open={!!modal} expense={modal} onClose={() => setModal(null)} />
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null); }}
+        title={t("deleteTitle")}
+        description={t("deleteBody")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        danger
+        onConfirm={async () => {
+          if (pendingDelete) await remove.mutateAsync(pendingDelete);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -161,6 +196,9 @@ export default function Expenses() {
 const CATEGORIES = ["General", "Software", "Hosting", "Meals", "Travel", "Office", "Marketing", "Equipment", "Other"];
 
 function ExpenseModal({ open, expense, onClose }) {
+  const { t } = useTranslation("expenses");
+  const { t: tc } = useTranslation("common");
+  const { data: settings } = useSettings();
   const isEdit = !!expense?.id;
   const { create, update } = useExpenseMutations();
   const [form, setForm] = useState<{
@@ -181,12 +219,12 @@ function ExpenseModal({ open, expense, onClose }) {
         category: expense?.category || "General",
         expense_date: toDateInput(expense?.expense_date) || new Date().toISOString().slice(0, 10),
         amount: expense?.amount ?? 0,
-        currency: expense?.currency || "USD",
+        currency: expense?.currency || settings?.currency || "EUR",
         notes: expense?.notes || "",
       });
       setErr("");
     }
-  }, [open, expense]);
+  }, [open, expense, settings]);
 
   if (!form) return null;
   const set =
@@ -202,16 +240,18 @@ function ExpenseModal({ open, expense, onClose }) {
     try {
       const payload = { ...form, amount: Number(form.amount) || 0 };
       if (isEdit && expense?.id) await update.mutateAsync({ id: expense.id, payload });
-      else await create.mutateAsync(payload);
+      else {
+        await create.mutateAsync(payload);
+        analytics.track("expense_created");
+      }
       onClose();
     } catch (ex) {
-      setErr(errorMessage(ex, "Couldn't save expense"));
+      setErr(errorMessage(ex, t("saveFailed")));
     } finally {
       setSaving(false);
     }
   }
 
-  const selectClass = "h-10 w-full rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/15";
   const prefilled = open && !isEdit && (form.vendor || Number(form.amount) > 0);
 
   return (
@@ -228,39 +268,58 @@ function ExpenseModal({ open, expense, onClose }) {
             className="relative w-full max-w-[480px] rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-hover p-6"
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold tracking-tight">{isEdit ? "Edit expense" : "Add expense"}</h3>
+              <h3 className="font-display text-lg font-semibold tracking-tight">{isEdit ? t("edit") : t("add")}</h3>
               <button type="button" onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface-2)]"><X size={16} /></button>
             </div>
             {prefilled && (
               <div className="mb-4 flex items-center gap-2 text-xs font-medium text-[var(--accent-strong)] bg-[var(--accent-soft)] rounded-xl px-3 py-2">
-                <Sparkles size={13} /> Pre-filled from your receipt — review and save.
+                <Sparkles size={13} /> {t("prefilled")}
               </div>
             )}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Vendor"><Input value={form.vendor} onChange={set("vendor")} placeholder="Adobe Inc." /></Field>
-                <Field label="Amount">
+                <Field label={t("vendor")}><Input value={form.vendor} onChange={set("vendor")} placeholder={t("vendorPlaceholder")} /></Field>
+                <Field label={t("amount")}>
                   <Input type="number" min="0" step="0.01" value={form.amount} onChange={set("amount")} className="tabular" />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Category">
-                  <select className={selectClass} value={form.category} onChange={set("category")}>
-                    {[...new Set([form.category, ...CATEGORIES])].map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                <Field label={t("category")}>
+                  <Select value={form.category} onValueChange={(v) => setForm((f) => (f ? { ...f, category: v } : f))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...new Set([form.category, ...CATEGORIES])].map((c) => (
+                        <SelectItem key={c} value={c}>{t(`categories.${c}`, { defaultValue: c })}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
-                <Field label="Date"><Input type="date" value={form.expense_date} onChange={set("expense_date")} /></Field>
+                <Field label={t("date")}><Input type="date" value={form.expense_date} onChange={set("expense_date")} /></Field>
               </div>
-              <Field label="Notes">
-                <Input value={form.notes} onChange={set("notes")} placeholder="What was this for?" />
+              <Field label={tc("currency")}>
+                <Select value={form.currency} onValueChange={(v) => setForm((f) => (f ? { ...f, currency: v } : f))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCY_CODES.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("notes")}>
+                <Input value={form.notes} onChange={set("notes")} placeholder={t("notesPlaceholder")} />
               </Field>
             </div>
             {err && <p className="text-sm text-[var(--danger)] mt-3">{err}</p>}
             <div className="flex items-center justify-end gap-2 mt-6">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={onClose}>{tc("cancel")}</Button>
               <Button type="submit" variant="accent" disabled={saving}>
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                {isEdit ? "Save" : "Add expense"}
+                {isEdit ? tc("save") : t("add")}
               </Button>
             </div>
           </motion.form>

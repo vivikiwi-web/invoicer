@@ -5,6 +5,7 @@ import { Bell, FileText, CheckCircle2, AlertTriangle, Send } from "lucide-react"
 import { IconButton } from "@/components/ui/IconButton";
 import { useDashboard } from "@/hooks/useDashboard";
 import { cn, relativeTime, formatMoney } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const TONE = {
   paid: "bg-[var(--success)]/12 text-[var(--success)]",
@@ -25,6 +26,9 @@ function statusKey(status?: string): keyof typeof TONE {
 }
 
 export function NotificationsPopover() {
+  const { t } = useTranslation("nav");
+  const { t: tc } = useTranslation("common");
+  const { t: ti } = useTranslation("invoices");
   const navigate = useNavigate();
   const { data } = useDashboard();
   const invoices = data?.recentInvoices || [];
@@ -53,9 +57,9 @@ export function NotificationsPopover() {
     <div ref={rootRef} className="relative">
       <IconButton
         onClick={() => setOpen((v) => !v)}
-        title="Notifications"
+        title={t("notifications.title")}
         dot={overdue > 0}
-        aria-label={`Notifications${overdue ? ` (${overdue} overdue)` : ""}`}
+        aria-label={`${t("notifications.title")}${overdue ? ` (${overdue})` : ""}`}
       >
         <Bell size={16} />
       </IconButton>
@@ -69,13 +73,13 @@ export function NotificationsPopover() {
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className="absolute right-0 top-[52px] z-40 w-[380px] rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-hover overflow-hidden"
             role="dialog"
-            aria-label="Notifications"
+            aria-label={t("notifications.title")}
           >
             <div className="flex items-center justify-between px-5 h-12 border-b border-[var(--border)]">
-              <div className="text-sm font-semibold text-[var(--ink)]">Recent activity</div>
+              <div className="text-sm font-semibold text-[var(--ink)]">{t("recentActivity")}</div>
               {overdue > 0 && (
                 <span className="text-[11px] font-semibold text-[var(--danger)] tabular-nums">
-                  {overdue} overdue
+                  {overdue === 1 ? t("notifications.overdueOne", { count: overdue }) : t("notifications.overdueOther", { count: overdue })}
                 </span>
               )}
             </div>
@@ -86,9 +90,9 @@ export function NotificationsPopover() {
                   <div className="h-10 w-10 mx-auto rounded-2xl bg-[var(--surface-2)] flex items-center justify-center text-[var(--ink-muted)] mb-3">
                     <FileText size={16} />
                   </div>
-                  <div className="text-sm font-medium text-[var(--ink)]">Nothing here yet</div>
+                  <div className="text-sm font-medium text-[var(--ink)]">{t("nothingHere")}</div>
                   <div className="text-xs text-[var(--ink-muted)] mt-1">
-                    New invoices and payments will show up here.
+                    {t("activityHint")}
                   </div>
                 </div>
               ) : (
@@ -113,10 +117,10 @@ export function NotificationsPopover() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-[var(--ink)] truncate">
-                              {inv.invoice_number} · {inv.client_name || "No client"}
+                              {inv.invoice_number} · {inv.client_name || ti("noClient")}
                             </div>
                             <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 truncate capitalize">
-                              {st} · {formatMoney(inv.total, inv.currency)}
+                              {tc(`status.${st}`)} · {formatMoney(inv.total, inv.currency)}
                             </div>
                           </div>
                           <div className="text-[10px] text-[var(--ink-muted)] shrink-0 tabular-nums mt-0.5">
@@ -137,7 +141,7 @@ export function NotificationsPopover() {
               }}
               className="w-full h-11 border-t border-[var(--border)] text-xs font-semibold text-[var(--accent-strong)] hover:bg-[var(--surface-2)] transition-colors"
             >
-              View all invoices
+              {t("viewAllInvoices")}
             </button>
           </motion.div>
         )}
