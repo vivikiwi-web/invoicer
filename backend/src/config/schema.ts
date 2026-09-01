@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
+    locale TEXT NOT NULL DEFAULT 'lt' CHECK (locale IN ('lt', 'en')),
     token_version INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -17,11 +18,12 @@ CREATE TABLE IF NOT EXISTS company_settings (
     address          TEXT NOT NULL DEFAULT '',
     email            TEXT NOT NULL DEFAULT '',
     phone            TEXT NOT NULL DEFAULT '',
-    currency         TEXT NOT NULL DEFAULT 'USD',
+    currency         TEXT NOT NULL DEFAULT 'EUR',
     tax_rate         NUMERIC(6,3) NOT NULL DEFAULT 0,
     invoice_prefix   TEXT NOT NULL DEFAULT 'INV-',
     next_seq         INTEGER NOT NULL DEFAULT 1,
     accent_color     TEXT NOT NULL DEFAULT '',
+    default_document_language TEXT NOT NULL DEFAULT 'lt' CHECK (default_document_language IN ('lt', 'en')),
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -35,6 +37,7 @@ CREATE TABLE IF NOT EXISTS clients (
     phone       TEXT NOT NULL DEFAULT '',
     address     TEXT NOT NULL DEFAULT '',
     notes       TEXT NOT NULL DEFAULT '',
+    document_language TEXT CHECK (document_language IS NULL OR document_language IN ('lt', 'en')),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -49,7 +52,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     status          TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid')),
     issue_date      DATE NOT NULL DEFAULT CURRENT_DATE,
     due_date        DATE,
-    currency        TEXT NOT NULL DEFAULT 'USD',
+    currency        TEXT NOT NULL DEFAULT 'EUR',
     tax_rate        NUMERIC(6,3) NOT NULL DEFAULT 0,  -- percent
     discount        NUMERIC(12,2) NOT NULL DEFAULT 0, -- flat amount
     subtotal        NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -57,6 +60,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     total           NUMERIC(12,2) NOT NULL DEFAULT 0,
     notes           TEXT NOT NULL DEFAULT '',
     terms           TEXT NOT NULL DEFAULT '',
+    document_language TEXT NOT NULL DEFAULT 'lt' CHECK (document_language IN ('lt', 'en')),
     paid_at         TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -100,7 +104,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     category    TEXT NOT NULL DEFAULT 'General',
     expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
     amount      NUMERIC(12,2) NOT NULL DEFAULT 0,
-    currency    TEXT NOT NULL DEFAULT 'USD',
+    currency    TEXT NOT NULL DEFAULT 'EUR',
     notes       TEXT NOT NULL DEFAULT '',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -122,6 +126,20 @@ CREATE TABLE IF NOT EXISTS payments (
 
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
+
+CREATE TABLE IF NOT EXISTS ai_usage_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    feature TEXT NOT NULL,
+    model TEXT NOT NULL,
+    success BOOLEAN NOT NULL,
+    fallback_used BOOLEAN NOT NULL DEFAULT false,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_usage_user_created ON ai_usage_events(user_id, created_at DESC);
 `;
 
 module.exports = { SCHEMA_SQL };

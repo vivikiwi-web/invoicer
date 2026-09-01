@@ -19,6 +19,7 @@ const clientSchema = z.object({
 	phone: z.string().trim().max(40).optional(),
 	address: z.string().trim().max(400).optional(),
 	notes: z.string().trim().max(2000).optional(),
+	document_language: z.enum(["lt", "en"]).nullable().optional(),
 });
 
 type ClientInput = import("zod").infer<typeof clientSchema>;
@@ -86,8 +87,8 @@ router.post(
 	asyncHandler(async (req, res) => {
 		const b = req.body as ClientInput;
 		const client = await queryOne(
-			`INSERT INTO clients (user_id, name, email, company, phone, address, notes)
-			VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+			`INSERT INTO clients (user_id, name, email, company, phone, address, notes, document_language)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
 			[
 				req.user.id,
 				b.name,
@@ -96,6 +97,7 @@ router.post(
 				b.phone || "",
 				b.address || "",
 				b.notes || "",
+				b.document_language ?? null,
 			],
 		);
 		res.status(201).json({ client });
@@ -107,7 +109,7 @@ router.patch(
 	validate(idParam, "params"),
 	validate(clientSchema.partial()),
 	asyncHandler(async (req, res) => {
-		const fields = ["name", "email", "company", "phone", "address", "notes"];
+		const fields = ["name", "email", "company", "phone", "address", "notes", "document_language"];
 		const sets: string[] = [];
 		const values: unknown[] = [req.params.id, req.user.id];
 		for (const f of fields) {

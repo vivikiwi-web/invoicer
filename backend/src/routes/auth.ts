@@ -18,6 +18,7 @@ const registerSchema = z.object({
 	password: z.string().min(8).max(128),
 	companyName: z.string().trim().max(120).optional(),
 	address: z.string().trim().max(400).optional(),
+	locale: z.enum(["lt", "en"]).optional(),
 });
 
 type RegisterInput = import("zod").infer<typeof registerSchema>;
@@ -29,9 +30,14 @@ const loginSchema = z.object({
 
 type LoginInput = import("zod").infer<typeof loginSchema>;
 
-const profileSchema = z.object({
-	name: z.string().trim().min(1).max(80),
-});
+const profileSchema = z
+	.object({
+		name: z.string().trim().min(1).max(80).optional(),
+		locale: z.enum(["lt", "en"]).optional(),
+	})
+	.refine((d) => d.name !== undefined || d.locale !== undefined, {
+		message: "No fields to update",
+	});
 
 const passwordSchema = z.object({
 	currentPassword: z.string().min(1).max(128),
@@ -54,13 +60,19 @@ router.post(
 	authLimiter,
 	validate(registerSchema),
 	asyncHandler(async (req, res) => {
-		const { name, email, password, companyName, address } = req.body as RegisterInput;
+		const { name, email, password, companyName, address, locale } =
+			req.body as RegisterInput;
 
 		const existing = await User.findByEmail(email);
 		if (existing) throw ApiError.conflict("Email already registered");
 
 		const passwordHash = await User.hashPassword(password);
-		const user = await User.create({ name, email, passwordHash });
+		const user = await User.create({
+			name,
+			email,
+			passwordHash,
+			locale: locale || "lt",
+		});
 
 		await Settings.ensure(user.id);
 		if (companyName || address) {
@@ -72,7 +84,7 @@ router.post(
 		}
 
 		issueSession(res, user);
-		res.status(201).json({ user });
+		res.status(201).json({ user: User.toPublicUser(user) });
 	}),
 );
 
@@ -89,17 +101,8 @@ router.post(
 		const ok = await User.comparePassword(password, record.password_hash);
 		if (!ok) throw ApiError.unauthorized("Invalid credentials");
 
-		const user = {
-			id: record.id,
-			email: record.email,
-			name: record.name,
-			token_version: record.token_version,
-			created_at: record.created_at,
-			updated_at: record.updated_at,
-		};
-
-		issueSession(res, user);
-		res.json({ user });
+		issueSession(res, record);
+		res.json({ user: User.toPublicUser(record) });
 	}),
 );
 
@@ -112,7 +115,7 @@ router.get(
 	"/me",
 	requireAuth,
 	asyncHandler(async (req, res) => {
-		res.json({ user: req.user });
+		res.json({ user: User.toPublicUser(req.user) });
 	}),
 );
 
@@ -121,9 +124,9 @@ router.patch(
 	requireAuth,
 	validate(profileSchema),
 	asyncHandler(async (req, res) => {
-		const { name } = req.body as ProfileInput;
-		const user = await User.updateName(req.user.id, name);
-		res.json({ user });
+		const { name, locale } = req.body as ProfileInput;
+		const user = await User.updateProfile(req.user.id, { name, locale });
+		res.json({ user: User.toPublicUser(user) });
 	}),
 );
 

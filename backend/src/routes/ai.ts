@@ -10,6 +10,7 @@ const { aiLimiter } = require("../middleware/rateLimit");
 const { query, queryOne } = require("../config/db");
 const Settings = require("../models/Settings");
 const gemini = require("../services/geminiService");
+const AiUsage = require("../models/AiUsage");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -19,12 +20,30 @@ router.post(
 	aiLimiter,
 	uploadReceipt("file"),
 	asyncHandler(async (req, res) => {
-		const data = await gemini.parseReceipt({
-			buffer: req.file.buffer,
-			mimeType: req.file.mimetype,
-		});
-
-		res.json({ result: data });
+		try {
+			const parsed = await gemini.parseReceipt({
+				buffer: req.file.buffer,
+				mimeType: req.file.mimetype,
+			});
+			await AiUsage.record({
+				userId: req.user.id,
+				feature: "receipt_scan",
+				model: parsed.model,
+				success: true,
+				fallbackUsed: parsed.fallbackUsed,
+				inputTokens: parsed.usage?.inputTokens,
+				outputTokens: parsed.usage?.outputTokens,
+			});
+			res.json({ result: parsed.result });
+		} catch (err) {
+			await AiUsage.record({
+				userId: req.user.id,
+				feature: "receipt_scan",
+				model: gemini.AI_MODELS.cheap,
+				success: false,
+			});
+			throw err;
+		}
 	}),
 );
 
@@ -67,7 +86,15 @@ router.post(
 			})),
 		};
 
-		const summary = await gemini.businessSummary(data);
+		const { text: summary, usage, model } = await gemini.businessSummary(data);
+		await AiUsage.record({
+			userId: uid,
+			feature: "business_summary",
+			model,
+			success: true,
+			inputTokens: usage?.inputTokens,
+			outputTokens: usage?.outputTokens,
+		});
 		res.json({ summary, data });
 	}),
 );
@@ -102,7 +129,7 @@ router.post(
 				)
 			: 0;
 
-		const draft = await gemini.paymentReminder({
+		const { draft, usage, model } = await gemini.paymentReminder({
 			tone: req.body.tone,
 			invoice: {
 				number: invoice.invoice_number,
@@ -116,6 +143,16 @@ router.post(
 			},
 			company: { name: settings.company_name || req.user.name },
 			daysOverdue,
+			documentLanguage: invoice.document_language === "lt" ? "lt" : "en",
+		});
+
+		await AiUsage.record({
+			userId: req.user.id,
+			feature: "payment_reminder",
+			model,
+			success: true,
+			inputTokens: usage?.inputTokens,
+			outputTokens: usage?.outputTokens,
 		});
 
 		res.json({ draft, meta: { daysOverdue, to: invoice.client_email } });
@@ -135,6 +172,7 @@ const writeNoteSchema = z.object({
 		)
 		.optional(),
 	client: z.object({ name: z.string().optional() }).partial().optional(),
+	document_language: z.enum(["lt", "en"]).optional(),
 });
 type WriteNoteInput = import("zod").infer<typeof writeNoteSchema>;
 
@@ -144,7 +182,21 @@ router.post(
 	validate(writeNoteSchema),
 	asyncHandler(async (req, res) => {
 		const body = req.body as WriteNoteInput;
-		const text = await gemini.writeNote(body);
+		const { text, usage, model } = await gemini.writeNote({
+			kind: body.kind,
+			prompt: body.prompt,
+			items: body.items,
+			client: body.client,
+			documentLanguage: body.document_language,
+		});
+		await AiUsage.record({
+			userId: req.user.id,
+			feature: "invoice_note",
+			model,
+			success: true,
+			inputTokens: usage?.inputTokens,
+			outputTokens: usage?.outputTokens,
+		});
 		res.json({ text });
 	}),
 );

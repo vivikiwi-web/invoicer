@@ -30,15 +30,31 @@ const invoiceSchema = z.object({
 	status: z.enum(["draft", "sent", "paid"]).default("draft"),
 	issue_date: dateStr,
 	due_date: dateStr,
-	currency: z.string().trim().max(8).default("USD"),
+	currency: z.string().trim().max(8).default("EUR"),
 	tax_rate: z.coerce.number().min(0).max(100).default(0),
 	discount: z.coerce.number().min(0).max(100_000_000).default(0),
 	notes: z.string().trim().max(4000).default(""),
 	terms: z.string().trim().max(2000).default(""),
+	document_language: z.enum(["lt", "en"]).optional(),
 	items: z.array(itemSchema).default([]),
 });
 
 type InvoiceInput = import("zod").infer<typeof invoiceSchema>;
+
+async function resolveDocumentLanguage(userId, clientId, explicit) {
+	if (explicit === "lt" || explicit === "en") return explicit;
+	if (clientId) {
+		const client = await queryOne(
+			`SELECT document_language FROM clients WHERE id = $1 AND user_id = $2`,
+			[clientId, userId],
+		);
+		if (client?.document_language === "lt" || client?.document_language === "en") {
+			return client.document_language;
+		}
+	}
+	const settings = await Settings.ensure(userId);
+	return settings?.default_document_language === "en" ? "en" : "lt";
+}
 
 async function assertClientOwned(userId: string, clientId?: string | null) {
 	if (!clientId) return;
@@ -170,12 +186,18 @@ router.post(
 		const invoiceNumber =
 			b.invoice_number || (await Settings.nextInvoiceNumber(req.user.id));
 
+		const documentLanguage = await resolveDocumentLanguage(
+			req.user.id,
+			b.client_id,
+			b.document_language,
+		);
 		const invoice = await withTransaction(async (client) => {
 			const { rows } = await client.query(
 				`INSERT INTO invoices
 					(user_id, client_id, invoice_number, status, issue_date, due_date,
-					currency, tax_rate, discount, subtotal, tax_amount, total, notes, terms, paid_at)
-				VALUES ($1,$2,$3,$4,COALESCE($5, CURRENT_DATE),$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+					currency, tax_rate, discount, subtotal, tax_amount, total, notes, terms,
+					document_language, paid_at)
+				VALUES ($1,$2,$3,$4,COALESCE($5, CURRENT_DATE),$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
 				RETURNING *`,
 				[
 					req.user.id,
@@ -192,6 +214,7 @@ router.post(
 					totals.total,
 					b.notes,
 					b.terms,
+					documentLanguage,
 					b.status === "paid" ? new Date() : null,
 				],
 			);
@@ -250,6 +273,7 @@ router.patch(
 			if (b.currency !== undefined) set("currency", b.currency);
 			if (b.notes !== undefined) set("notes", b.notes);
 			if (b.terms !== undefined) set("terms", b.terms);
+			if (b.document_language !== undefined) set("document_language", b.document_language);
 			if (totals) {
 				set("tax_rate", taxRate);
 				set("discount", totals.discount);

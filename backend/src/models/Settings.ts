@@ -1,7 +1,8 @@
 const { query, queryOne, withTransaction } = require("../config/db");
 
 const COLS = `user_id, company_name, logo_url, address, email, phone,
-	currency, tax_rate, invoice_prefix, next_seq, accent_color, created_at, updated_at`;
+	currency, tax_rate, invoice_prefix, next_seq, accent_color,
+	default_document_language, created_at, updated_at`;
 
 async function ensure(userId) {
 	await query(
@@ -29,6 +30,7 @@ async function update(userId, fields) {
 		"tax_rate",
 		"invoice_prefix",
 		"accent_color",
+		"default_document_language",
 	];
 
 	const sets: string[] = [];

@@ -10,6 +10,21 @@ export type ReminderTone = (typeof REMINDER_TONES)[number];
 export const NOTE_KINDS = ["description", "terms"] as const;
 export type NoteKind = (typeof NOTE_KINDS)[number];
 
+export const LOCALES = ["lt", "en"] as const;
+export type Locale = (typeof LOCALES)[number];
+export type DocumentLanguage = Locale;
+
+export const CURRENCY_CODES = ["EUR", "USD", "GBP", "INR", "CAD", "AUD", "JPY"] as const;
+export type CurrencyCode = (typeof CURRENCY_CODES)[number];
+
+export const AI_FEATURES = [
+  "receipt_scan",
+  "business_summary",
+  "payment_reminder",
+  "invoice_note",
+] as const;
+export type AiFeature = (typeof AI_FEATURES)[number];
+
 export function isInvoiceStatus(value: string): value is InvoiceStatus {
   return (INVOICE_STATUSES as readonly string[]).includes(value);
 }
@@ -22,10 +37,28 @@ export function isReminderTone(value: string): value is ReminderTone {
   return (REMINDER_TONES as readonly string[]).includes(value);
 }
 
+export function isLocale(value: string): value is Locale {
+  return (LOCALES as readonly string[]).includes(value);
+}
+
+export function isDocumentLanguage(value: string): value is DocumentLanguage {
+  return isLocale(value);
+}
+
+export function isCurrencyCode(value: string): value is CurrencyCode {
+  return (CURRENCY_CODES as readonly string[]).includes(value);
+}
+
+/** BCP 47 tag for Intl (money, dates) from a UI or document language. */
+export function intlLocale(locale?: string | null): string {
+  return locale === "en" || locale?.startsWith("en") ? "en-US" : "lt-LT";
+}
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  locale: Locale;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +75,7 @@ export interface CompanySettings {
   invoice_prefix: string;
   next_seq: number;
   accent_color: string;
+  default_document_language: DocumentLanguage;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +89,7 @@ export interface Client {
   phone: string;
   address: string;
   notes: string;
+  document_language: DocumentLanguage | null;
   created_at: string;
   updated_at: string;
   invoice_count?: number;
@@ -88,6 +123,7 @@ export interface Invoice {
   total: number;
   notes: string;
   terms: string;
+  document_language: DocumentLanguage;
   paid_at: string | null;
   created_at: string;
   updated_at: string;
@@ -109,6 +145,7 @@ export interface InvoiceInput {
   discount?: number;
   notes?: string;
   terms?: string;
+  document_language?: DocumentLanguage;
   items?: Array<Pick<InvoiceItem, "description" | "quantity" | "rate">>;
 }
 
@@ -147,6 +184,7 @@ export interface Payment {
   created_at: string;
   invoice_number?: string;
   invoice_total?: number;
+  invoice_currency?: string;
   client_name?: string | null;
 }
 

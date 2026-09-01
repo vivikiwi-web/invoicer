@@ -98,7 +98,7 @@ router.post(
 				b.category || "General",
 				b.expense_date || null,
 				b.amount,
-				b.currency || "USD",
+				b.currency || "EUR",
 				b.notes || "",
 			],
 		);

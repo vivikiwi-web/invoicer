@@ -105,7 +105,7 @@ async function run() {
 		address: "410 Townsend St, San Francisco, CA 94107",
 		email: DEMO.email,
 		phone: "+1 (415) 555-0192",
-		currency: "USD",
+		currency: "EUR",
 		tax_rate: 8.5,
 		invoice_prefix: "INV-",
 	});
@@ -196,7 +196,7 @@ async function run() {
 			`INSERT INTO invoices
 				(user_id, client_id, invoice_number, status, issue_date, due_date,
 				currency, tax_rate, discount, subtotal, tax_amount, total, notes, terms, paid_at)
-			VALUES ($1,$2,$3,$4,$5,$6,'USD',$7,$8,$9,$10,$11,$12,$13,$14)
+			VALUES ($1,$2,$3,$4,$5,$6,'EUR',$7,$8,$9,$10,$11,$12,$13,$14)
 			RETURNING id`,
 			[
 				uid,

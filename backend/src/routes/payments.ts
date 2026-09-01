@@ -60,7 +60,7 @@ router.get(
 	"/",
 	asyncHandler(async (req, res) => {
 		const { rows } = await query(
-			`SELECT p.*, i.invoice_number, i.total AS invoice_total, c.name AS client_name
+			`SELECT p.*, i.invoice_number, i.total AS invoice_total, i.currency AS invoice_currency, c.name AS client_name
 			FROM payments p
 			JOIN invoices i ON i.id = p.invoice_id
 			LEFT JOIN clients c ON c.id = i.client_id

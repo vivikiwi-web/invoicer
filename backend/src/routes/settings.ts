@@ -26,6 +26,7 @@ const settingsSchema = z.object({
 	tax_rate: z.coerce.number().min(0).max(100).optional(),
 	invoice_prefix: z.string().trim().max(12).optional(),
 	accent_color: z.string().trim().max(32).optional(),
+	default_document_language: z.enum(["lt", "en"]).optional(),
 });
 
 type SettingsInput = import("zod").infer<typeof settingsSchema>;
