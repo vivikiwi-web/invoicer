@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -53,11 +54,7 @@ function CompanySection() {
   }, [settings, form]);
 
   if (!form) {
-    return (
-      <div className="flex items-center py-16 justify-center text-[var(--ink-muted)]">
-        <Loader2 className="animate-spin" size={18} />
-      </div>
-    );
+    return <PageSpinner className="py-16" />;
   }
 
   const set = (k: string) => (e: { target: { value: string } }) =>

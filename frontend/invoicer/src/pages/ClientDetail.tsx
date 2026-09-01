@@ -18,7 +18,6 @@ import {
   Pencil,
   Trash2,
   Plus,
-  Loader2,
   Mail,
   Phone,
   MapPin,
@@ -30,6 +29,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { ClientFormModal } from "@/components/clients/ClientFormModal";
 import { useClient, useDeleteClient } from "@/hooks/useClients";
 import { formatMoney, formatDate } from "@/lib/utils";
@@ -95,11 +95,7 @@ export default function ClientDetail() {
   const stats = data?.stats || { count: 0, totalBilled: 0, outstanding: 0 };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-[var(--ink-muted)]">
-        <Loader2 className="animate-spin" size={20} />
-      </div>
-    );
+    return <PageSpinner />;
   }
   if (error || !data?.client) {
     return <EmptyState icon={Mail} title="Client not found" description="It may have been deleted." />;
@@ -256,6 +252,7 @@ function PaymentStatusCard({ insights }) {
                   outerRadius={56}
                   paddingAngle={2}
                   stroke="none"
+                  isAnimationActive={false}
                 >
                   {breakdown.map((s, i) => (
                     <Cell key={i} fill={s.color} />
@@ -347,7 +344,7 @@ function BillingChartCard({ insights }) {
               }}
               formatter={(v) => [formatMoney(v), "Billed"]}
             />
-            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40} fill="url(#clientBillGrad)" />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40} fill="url(#clientBillGrad)" isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       ) : (

@@ -210,7 +210,7 @@ function RevenueChart({ series }) {
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
             <Tooltip contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Revenue"]} />
-            <Area type="monotone" dataKey="revenue" stroke="url(#revStroke)" strokeWidth={3} fill="url(#revArea)" dot={{ r: 3, fill: T2, strokeWidth: 0 }} activeDot={{ r: 5, fill: T2 }} />
+            <Area type="monotone" dataKey="revenue" stroke="url(#revStroke)" strokeWidth={3} fill="url(#revArea)" dot={{ r: 3, fill: T2, strokeWidth: 0 }} activeDot={{ r: 5, fill: T2 }} isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
       ) : (
@@ -315,7 +315,7 @@ function StatusDonutCard({ reports, total }) {
                   <linearGradient id="gOverdue" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#e11d48" /></linearGradient>
                   <linearGradient id="gDraft" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#cbd5e1" /><stop offset="100%" stopColor="#94a3b8" /></linearGradient>
                 </defs>
-                <Pie data={data} dataKey="value" innerRadius={54} outerRadius={80} paddingAngle={2} stroke="none">
+                <Pie data={data} dataKey="value" innerRadius={54} outerRadius={80} paddingAngle={2} stroke="none" isAnimationActive={false}>
                   {data.map((s) => <Cell key={s.key} fill={`url(#g${s.name})`} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
@@ -370,7 +370,7 @@ function AgingCard({ reports }) {
               <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 10 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 11 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
               <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Amount"]} />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40}>
+              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40} isAnimationActive={false}>
                 {aging.map((_, i) => <Cell key={i} fill={i === 0 ? "url(#gCurrent)" : i >= 3 ? "url(#gDanger)" : "url(#gWarn)"} />)}
               </Bar>
             </BarChart>

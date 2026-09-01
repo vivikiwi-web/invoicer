@@ -117,8 +117,8 @@ export default function Reports() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
                 <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Bar name="Revenue" dataKey="revenue" fill="var(--accent)" radius={[5, 5, 0, 0]} maxBarSize={28} />
-                <Bar name="Expenses" dataKey="expenses" fill="var(--warning)" radius={[5, 5, 0, 0]} maxBarSize={28} />
+                <Bar name="Revenue" dataKey="revenue" fill="var(--accent)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+                <Bar name="Expenses" dataKey="expenses" fill="var(--warning)" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -136,7 +136,7 @@ export default function Reports() {
             <>
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
-                  <Pie data={statusData} dataKey="value" innerRadius={50} outerRadius={72} paddingAngle={2} stroke="none">
+                  <Pie data={statusData} dataKey="value" innerRadius={50} outerRadius={72} paddingAngle={2} stroke="none" isAnimationActive={false}>
                     {statusData.map((s) => <Cell key={s.key} fill={STATUS_COLORS[s.key]} />)}
                   </Pie>
                   <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [formatMoney(v), n]} />
@@ -174,7 +174,7 @@ export default function Reports() {
                 <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--ink-muted)", fontSize: 12 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
                 <Tooltip cursor={{ fill: "var(--surface-2)" }} contentStyle={tooltipStyle} formatter={(v) => [formatMoney(v), "Amount"]} />
-                <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={48}>
+                <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={48} isAnimationActive={false}>
                   {aging.map((a, i) => (
                     <Cell key={i} fill={i === 0 ? "var(--accent)" : i >= 3 ? "var(--danger)" : "var(--warning)"} />
                   ))}

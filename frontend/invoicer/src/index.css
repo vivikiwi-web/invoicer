@@ -103,6 +103,11 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* First paint matches page-enter `initial` so cached pages don't flash visible. */
+.page-view {
+  opacity: 0;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -120,6 +125,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .page-view {
+    opacity: 1;
   }
 }
 

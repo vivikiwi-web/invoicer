@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { Input } from "@/components/ui/Input";
 import { useClients } from "@/hooks/useClients";
 import { useSettings } from "@/hooks/useSettings";
@@ -119,11 +120,7 @@ export default function InvoiceEditor() {
   }, [form]);
 
   if (!form || (isEdit && loadingInvoice)) {
-    return (
-      <div className="flex items-center justify-center py-24 text-[var(--ink-muted)]">
-        <Loader2 className="animate-spin" size={20} />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   const set = (patch: Partial<EditorForm>) =>

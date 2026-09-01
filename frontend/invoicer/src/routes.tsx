@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -16,14 +17,6 @@ import Items from "@/pages/Items";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import { useAuth } from "@/context/AuthContext";
-
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-[var(--ink-muted)] text-sm">
-      Loading...
-    </div>
-  );
-}
 
 function ProtectedShell() {
   const { user, loading } = useAuth();

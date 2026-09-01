@@ -22,6 +22,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { InvoiceDocument } from "@/components/invoice/InvoiceDocument";
 import {
   useInvoice,
@@ -41,11 +42,7 @@ export default function InvoiceDetail() {
   const del = useDeleteInvoice();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-[var(--ink-muted)]">
-        <Loader2 className="animate-spin" size={20} />
-      </div>
-    );
+    return <PageSpinner />;
   }
   if (error || !invoice) {
     return <EmptyState icon={Mail} title="Invoice not found" description="It may have been deleted." />;
